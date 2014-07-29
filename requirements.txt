@@ -1,0 +1,7 @@
+numpy
+flask
+python_twitter
+pypng
+scipy
+PIL
+python-dateutil

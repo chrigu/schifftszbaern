@@ -1,0 +1,4 @@
+import sys
+sys.path.insert(0, '/path/to/directory/schifftszbaern')
+
+from server.server import app as application

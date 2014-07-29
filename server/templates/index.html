@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<!-- weather inspired by http://codepen.io/noahblon/details/lxukH -->
+<link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/screen.css') }}" media="screen, projection" type="text/css">
+<link rel="shortcut icon" href="http://xn--schifftszbrn-pcb.ch/static/favicon.ico" />
+<meta name = "viewport" content="width=320,initial-scale=1.0, user-scalable = no">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='images/touch-icon-iphone.png') }}">
+<link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='images/touch-icon-ipad.png') }}">
+<link rel="apple-touch-icon" sizes="120x120" href="{{ url_for('static', filename='images/touch-icon-retina.png') }}">
+<link rel="apple-touch-icon" sizes="152x152" href="touch-icon-ipad-retina.png">
+<script src="{{ url_for('static', filename='js/modernizr.js') }}"></script>
+<title>Schiffts z'Bärn? | Beta</title>
+</head>
+<body class="{% if rain %}bad-weather{% else %}good-weather{% endif %}">
+<div id="main">
+  <div class="block">
+    <div class="centered">
+      <p class="current-situation">{% if rain %}
+        S'schifft
+        {% else %}
+        S'schifft grad nid
+        {% endif %}
+      </p>
+      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+           width="18.5em" height="18.125em" viewBox="0 0 300.125 291.881" enable-background="new 0 0 296.125 291.881"
+           xml:space="preserve" class="weather">
+      <g id="cloud">
+          <path d="M282.198,134.232c0-20.439-14.99-37.375-34.576-40.418c-2.9-31.056-29.027-55.366-60.84-55.366
+              c-24.461,0-45.557,14.376-55.323,35.136c-7.336-6.972-17.248-11.259-28.167-11.259c-22.592,0-40.906,18.314-40.906,40.906
+              c0,1.605,0.103,3.186,0.282,4.742c-24.009,4.12-42.282,25.022-42.282,50.207c0,28.144,22.813,50.958,50.957,50.958
+              c16.53,0,31.215-7.877,40.525-20.076c7.247,18.203,25.016,31.076,45.803,31.076c17.297,0,32.502-8.916,41.299-22.396
+              c5.001,2.18,10.519,3.396,16.322,3.396c18.105,0,33.453-11.768,38.839-28.067C270.43,167.686,282.198,152.338,282.198,134.232z"/>
+      </g>
+      <clipPath id="rainclip">
+          <rect width="300" height="200" transform="translate(20,125)"/>
+      </clipPath>
+      <g class="rain" clip-path="url(#rainclip)">
+        <g class="raindrop">
+        <line fill="none" stroke="#000000" stroke-width="3" stroke-miterlimit="3" x1="5" y1="5" x2="57" y2="93" transform="translate(10, 70)"/>
+        </g>
+        <g class="raindrop">
+        <line fill="none" stroke="#000000" stroke-width="3" stroke-miterlimit="3" x1="5" y1="5" x2="57" y2="93" transform="translate(60, 70)"/>
+        </g>
+        <g class="raindrop">
+        <line fill="none" stroke="#000000" stroke-width="3" stroke-miterlimit="3" x1="5" y1="5" x2="57" y2="93" transform="translate(100, 70)"/>
+        </g>
+        <g class="raindrop">
+        <line fill="none" stroke="#000000" stroke-width="3" stroke-miterlimit="3" x1="5" y1="5" x2="57" y2="93" transform="translate(160, 70)"/>
+        </g>
+      </g>
+      </svg>
+      <div class="city"><img src="{{ url_for('static', filename='images/city.svg') }}" alt="Berne"/></div>
+    </div>
+  </div> 
+</div>
+
+  <section class="info">
+    <div class="arrow"></div>
+    <div class="center">
+      <h1>Schiffts z'Bärn?</h1>
+      {% if rain %}
+      <p data-lastupdate="{{last_update}}">S'schifft sit: {{ rain_since }}</p>
+      {% else %}
+      <p data-lastupdate="{{last_update}}">S'isch troche sit: {{ dry_since }}</p>
+      {% endif %}
+    </div>
+  </section>
+<div class="arrow"></div>
+<footer>
+  <ul><li>Uf <a href="http://www.twitter.com/schifftszbaern">Twitter</a></li></ul>
+</footer>
+</body>
+</html>

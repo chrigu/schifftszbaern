@@ -1,0 +1,264 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+/* weather inspired by http://codepen.io/noahblon/details/lxukH */
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline; }
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
+  display: block; }
+
+body {
+  line-height: 1; }
+
+ol, ul {
+  list-style: none; }
+
+blockquote, q {
+  quotes: none; }
+
+blockquote:before, blockquote:after {
+  content: '';
+  content: none; }
+
+q:before, q:after {
+  content: '';
+  content: none; }
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0; }
+
+body {
+  font-family: 'Helvetica Neue', 'Arial', 'sans-serif';
+  line-height: 1; }
+
+html, body, #main {
+  height: 100%;
+  width: 100%; }
+
+svg {
+  display: none; }
+
+.bad-weather {
+  background: silver; }
+  .bad-weather > .arrow {
+    border-color: transparent transparent silver transparent; }
+  .bad-weather .centered {
+    margin-top: 2em; }
+
+.good-weather {
+  background: #58c6ff; }
+  .good-weather > .arrow {
+    border-color: transparent transparent #58c6ff transparent; }
+  .good-weather .centered {
+    margin-top: 10em; }
+
+.arrow {
+  width: 0px;
+  height: 0px;
+  margin: 0 auto;
+  position: relative;
+  top: -1em;
+  border-style: solid;
+  border-width: 0 1em 1em 1em;
+  border-color: transparent transparent #ffffff transparent;
+  fill: #ffffff; }
+
+.svg.svgclippaths.inlinesvg .bad-weather .weather {
+  display: inline; }
+
+/* This parent can be any width and height */
+.block {
+  margin-top: 0em;
+  text-align: center;
+  min-height: 100%; }
+
+/* The ghost, nudged to maintain perfect centering */
+                       /*.block:before {
+content: '';
+display: inline-block;
+height: 80%;
+vertical-align: middle;
+margin-right: -0.25em; /* Adjusts for spacing */
+/*}*/
+.centered {
+  display: inline-block;
+  /*  vertical-align: middle;*/
+  width: 18.75em; }
+  .centered p {
+    margin-bottom: 2em; }
+
+.center {
+  margin: 0 auto;
+  width: 100%; }
+  .center p {
+    width: 18em; }
+
+.weather {
+  shape-rendering: geometric-precision;
+  -webkit-transition: opacity 1000ms linear;
+  -moz-transition: opacity 1000ms linear;
+  -o-transition: opacity 1000ms linear;
+  -ms-transition: opacity 1000ms linear;
+  transition: opacity 1000ms linear; }
+
+g {
+  fill: #FFFFFF; }
+
+line {
+  stroke: #FFFFFF; }
+
+.info {
+  background: white; }
+
+section {
+  padding-bottom: 2em; }
+  section p, section h1 {
+    margin: 1em 0 0 1em; }
+  section h1 {
+    padding: 1em 0 0 0; }
+  section .center {
+    width: 18em;
+    margin-top: -32px; }
+
+footer {
+  padding: 1em;
+  font-size: 0.7em;
+  text-align: center; }
+  footer a {
+    color: white;
+    text-decoration: none; }
+    footer a:hover {
+      text-decoration: underline; }
+  footer .arrow {
+    fill: #58c6ff; }
+
+.raindrop {
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-timing-function: linear;
+  -webkit-transform-origin: 50% 50%;
+  -webkit-animation-duration: 18s;
+  -webkit-animation-direction: normal;
+  fill-opacity: 0;
+  -webkit-animation-name: drizzleFall, fillOpacity2;
+  -webkit-animation-timing-function: ease-in;
+  -webkit-animation-duration: 1.5s; }
+
+.raindrop:nth-child(1) {
+  -webkit-animation-delay: 0s;
+  -moz-animation-delay: 0s;
+  -o-animation-delay: 0s;
+  animation-delay: 0s; }
+
+.raindrop:nth-child(2) {
+  -webkit-animation-delay: 0.4s;
+  -moz-animation-delay: 0.4s;
+  -o-animation-delay: 0.4s;
+  animation-delay: 0.4s; }
+
+.raindrop:nth-child(3) {
+  -webkit-animation-delay: 0.9s;
+  -moz-animation-delay: 0.9s;
+  -o-animation-delay: 0.9s;
+  animation-delay: 0.9s; }
+
+.raindrop:nth-child(4) {
+  -webkit-animation-delay: 0.2s;
+  -moz-animation-delay: 0.2s;
+  -o-animation-delay: 0.2s;
+  animation-delay: 0.2s; }
+
+@-webkit-keyframes drizzleFall {
+  100% {
+    -webkit-transform: translate(110px, 176px); } }
+
+@-moz-keyframes drizzleFall {
+  0% {
+    -moz-transform: translate(0, 0); }
+
+  100% {
+    -moz-transform: translate(110px, 176px); } }
+
+@-o-keyframes drizzleFall {
+  0% {
+    -o-transform: translate(0, 0); }
+
+  100% {
+    -o-transform: translate(110px, 176px); } }
+
+@keyframes drizzleFall {
+  0% {
+    transform: translate(0, 0); }
+
+  100% {
+    transform: translateY(110px, 176px); } }
+
+@-webkit-keyframes fillOpacity2 {
+  0% {
+    fill-opacity: 1;
+    stroke-opacity: 1; }
+
+  50% {
+    fill-opacity: 1;
+    stroke-opacity: 1; }
+
+  100% {
+    fill-opacity: 0;
+    stroke-opacity: 0; } }
+
+@-moz-keyframes fillOpacity2 {
+  0% {
+    fill-opacity: 1;
+    stroke-opacity: 1; }
+
+  50% {
+    fill-opacity: 1;
+    stroke-opacity: 1; }
+
+  100% {
+    fill-opacity: 0;
+    stroke-opacity: 0; } }
+
+@-o-keyframes fillOpacity2 {
+  0% {
+    fill-opacity: 1;
+    stroke-opacity: 1; }
+
+  50% {
+    fill-opacity: 1;
+    stroke-opacity: 1; }
+
+  100% {
+    fill-opacity: 0;
+    stroke-opacity: 0; } }
+
+@keyframes fillOpacity2 {
+  0% {
+    fill-opacity: 1;
+    stroke-opacity: 1; }
+
+  50% {
+    fill-opacity: 1;
+    stroke-opacity: 1; }
+
+  100% {
+    fill-opacity: 0;
+    stroke-opacity: 0; } }
+
+@media only screen and (max-width: 640px) {
+  img, .weather {
+    max-width: 150px; }
+
+  .weather {
+    height: 150px; }
+
+  .good-weather .centered {
+    margin-top: 5em; } }
