@@ -96,6 +96,7 @@ def schiffts():
 
             except Exception, e:
                 print "fail in queuefiller: %s"%e
+                
         #use old data
         else:
             if settings.DEBUG:

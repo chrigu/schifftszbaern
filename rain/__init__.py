@@ -16,36 +16,49 @@ from datetime import datetime, timedelta
 from operator import itemgetter
 import math
 
-"""
-
-PNG info:
-
-1px = approx. 850m
-
-*******
-
-radar values:
-
-< 1mm/h   0/150/255
-< 3mm/h   0/50/255
-< 10mm/h  0/0/200
-< 30mm/h  0/0/125
-< 100mm/h 255/255/0
-> 100mm/h 255/0/0
-
-Flocken 199/254/254
-schwach 150/255/255
-mässig 100/255/255
-stark 25/255/255
-sehr stark 0/255/255
-extrem 0/200/255
 
 
-"""
+def build_timestamp(time, forecast=False):
+    """
+    Takes the given time and subtracts 8 minutes and rounds to the next lower 5minute step.
+    """
+
+    #update rate is 5min, so round to the last 5minute step
+    off_minutes = time.minute%5
+    rounded_delta = timedelta(0,off_minutes*60)
+
+    rounded_time = (time - rounded_delta).replace(second=0, microsecond=0)
+
+    return rounded_time
+
 
 class Measurement(object):
     """
     Contains rain information for the whole area for a given time
+
+    PNG info:
+
+    1px = approx. 850m
+
+    *******
+
+    radar values:
+
+    < 1mm/h   0/150/255
+    < 3mm/h   0/50/255
+    < 10mm/h  0/0/200
+    < 30mm/h  0/0/125
+    < 100mm/h 255/255/0
+    > 100mm/h 255/0/0
+
+    Flocken 199/254/254
+    schwach 150/255/255
+    mässig 100/255/255
+    stark 25/255/255
+    sehr stark 0/255/255
+    extrem 0/200/255
+
+
     """
 
     meteo_values = [{'name':'1mm/h', 'rgb':[0, 150, 255], 'intensity':0}, \
@@ -110,7 +123,7 @@ class Measurement(object):
             r = png.Reader(file=urllib.urlopen(url))
             self.local = False
 
-        #try to get the png's properties
+        #get the png's properties
         try:
             data = r.read()
 
@@ -431,7 +444,7 @@ class RainPredictor(object):
                 else:
                     closest_match = None
 
-            #find the closest match for among the cells for a given time
+            #find the closest match among the cells for a given time
             for last_sample in n_1_values: #FIXME: rename to new_smample
                 position = np_array(last_sample['center_of_mass'])
                 if close_points.has_key(last_sample['id']):
@@ -455,11 +468,11 @@ class RainPredictor(object):
 
         hits = []
 
+        #Loop through a raincells history (past positions) and calculate the movement for the next 50min
         for history in new_data:
-            #Loop through a raincells history (past positions) and calculate the movement for the next 50min
 
             if settings.DEBUG:
-                print "***** cell history *****"
+                print "***** cell forecast *****"
 
             #get average movement
             coms = np_array(map(lambda sample: sample['movement'], history[1:settings.NO_SAMPLES])) #FIXME: movement in wrong sample
@@ -493,31 +506,31 @@ class RainPredictor(object):
                 forecast_sample['timestamp'] = time
                 history.append(forecast_sample)
 
-            
-            #for sample in history:
-                #check if the sample will hit the location
-                if forecast_sample['size'] == 0:# or not forecast_sample['forecast']:
+                #rain cells need to have a certain size
+                if forecast_sample['size'] > 3:# or not forecast_sample['forecast']:
                     continue
 
                 radius_abs = math.sqrt(forecast_sample['size']/math.pi)
                 diff = linalg.norm((self.center, self.center) - np_array(forecast_sample['center_of_mass']))
                 if not first_sample:
+                    #check if the cell coming closer
                     if diff > last_diff:
                         forecast_sample['moving_away'] = True
 
                 if settings.DEBUG:
                     print "%s %s - dist: %s - forecast: %s"%(forecast_sample['center_of_mass'], forecast_sample['size'], diff-radius_abs, forecast_sample['forecast'])
-                #rain hits location
-                if(diff-radius_abs < 3):
+                
+                #check if the cell will hit the location
+                if(diff-radius_abs < 0.5):
                     #hits.append({'history':history, 'dtime':forecast_sample['timestamp']-int(now), 'timestamp':forecast_sample['timestamp']})
-                    print "last: %s, timestamp: %s, now: %s"%(self.last_timestamp, forecast_sample['timestamp']-self.last_timestamp, (self.last_timestamp-datetime.now()).total_seconds())
                     hits.append({'dtime':(forecast_sample['timestamp']-datetime.now()).total_seconds(), 'timestamp':forecast_sample['timestamp'], 'sample':forecast_sample})
                     print forecast_sample['timestamp']
                     print (forecast_sample['timestamp']-datetime.now()).total_seconds()
-                    print "direct hit"
+                    if settings.DEBUG:
+                        print "last: %s, timestamp: %s, now: %s"%(self.last_timestamp, forecast_sample['timestamp']-self.last_timestamp, (self.last_timestamp-datetime.now()).total_seconds())
+                        print "direct hit"
                     break
 
-                #print a['center_of_mass']
                 if first_sample:
                     first_sample = False
 
@@ -528,10 +541,10 @@ class RainPredictor(object):
         next_impact_time = None
         next_size = -1
 
-        if settings.DEBUG:
+        if hits and settings.DEBUG:
             print "****** impacts *******"
 
-        #loop through all cells that'll hit the location and get the one that'll hits the location the soonest
+        #loop through all cells that'll hit the location and get the one that'll hit the location the soonest
         for hit in hits:
             last_intensity = None
             #for sample in hit['history']:
@@ -566,21 +579,4 @@ class RainPredictor(object):
 
         return time_to_next_hit, next_size, next_impact_time
 
-
-
-############################            
-
-
-def build_timestamp(time, forecast=False):
-    """
-    Takes the given time and subtracts 8 minutes and rounds to the next lower 5minute step.
-    """
-
-    #update rate is 5min, so round to the last 5minute step
-    off_minutes = time.minute%5
-    rounded_delta = timedelta(0,off_minutes*60)
-
-    rounded_time = (time - rounded_delta).replace(second=0, microsecond=0)
-
-    return rounded_time
 

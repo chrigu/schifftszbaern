@@ -82,8 +82,7 @@ The configuration can be found in settings.py. The following settings are availa
 | SERVER_URL | String | URL where the updates will be sent to |
 | SECRET | String | Secret required for sending updates to the server |
 | DUNNO_MESSAGE | String | Message to display when no data is available |
-| DUNNO_MESSAGE | String | Message to display when no data is available |
-| DUNNO_MESSAGE | Date format | Format used to display the date on the website. Default `%d.%m.%Y %H:%M` |
+| DISPLAY_DATE_FORMAT | Date format | Format used to display the date on the website. Default `%d.%m.%Y %H:%M` |
 
 ##Todo
 
