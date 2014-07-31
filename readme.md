@@ -11,8 +11,8 @@ The rain information is pulled from the [Swiss National TV's rain radar webpage 
 ##Quickstart for the impatient
 1. Install the required Pyhton packages via `pip install -r requirements.txt`
 2. Run `cp settings.sample.py settings.py`
-2. Run `python main.py`
-3. On the terminal you should see some output, but it should state somewhere "raining now: True/False"
+3. Run `python main.py`
+5. On the terminal you should see some output, but it should state somewhere "raining now: True/False"
 
 ##Setup
 
@@ -53,7 +53,7 @@ You can run `python get_token.py` (requires the oauth2 package) and it will take
 
 ##Server Setup
 
-The server is based on flask so please refer to flask's [documentation](http://flask.pocoo.org/docs/quickstart/#deploying-to-a-web-server) for configuring it with your webserver. For testing you can run flask locally. The only setting that is required is the `SERVER_DATA_FILE` as the server saves the latest data to it.
+The server is based on flask so please refer to flask's [documentation](http://flask.pocoo.org/docs/quickstart/#deploying-to-a-web-server) for configuring it with your webserver. For testing you can run flask locally. The only setting that is required is the `SERVER_DATA_FILE` as the server saves the latest data to it. The path of this file can be absolute or relative (the default value is relative so you need to run `python server/server.py` from the main directory).
 
 ##Configuration Options
 
