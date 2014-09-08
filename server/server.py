@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, abort, request, render_template
+from flask import Flask, abort, request, render_template, jsonify
 import dateutil.parser
 from datetime import datetime
 import json
@@ -131,6 +131,26 @@ def update_weather():
         
     else:
        abort(401)
+
+
+@app.route('/api/schiffts')
+def api():
+        #read last saved data, if it fails return an error
+        #FIXME: let the webserver return the file, so that flask won't serve the file
+        try:
+            f = open(settings.SERVER_DATA_FILE, 'r')
+            weather_data = json.loads(f.read())
+        except Exception, e:
+            weather_data = {'last_rain_intensity':None,
+                            'last_rain':None,
+                            'last_dry':None,
+                            'rain_since':None,
+                            'dry_since':None,
+                            'last_update_rain':False,
+                            }
+
+        return jsonify(weather_data)
+
 
 if __name__ == '__main__':
     app.run()

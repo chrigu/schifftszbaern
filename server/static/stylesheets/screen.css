@@ -15,9 +15,6 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
 article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
   display: block; }
 
-body {
-  line-height: 1; }
-
 ol, ul {
   list-style: none; }
 
@@ -140,6 +137,9 @@ footer {
       text-decoration: underline; }
   footer .arrow {
     fill: #58c6ff; }
+
+  footer li:last-child {
+    margin-top: 1em; }
 
 .raindrop {
   -webkit-animation-iteration-count: infinite;
