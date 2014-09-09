@@ -507,7 +507,7 @@ class RainPredictor(object):
                 history.append(forecast_sample)
 
                 #rain cells need to have a certain size
-                if forecast_sample['size'] > 3:# or not forecast_sample['forecast']:
+                if forecast_sample['size'] < 3:# or not forecast_sample['forecast']:
                     continue
 
                 radius_abs = math.sqrt(forecast_sample['size']/math.pi)
