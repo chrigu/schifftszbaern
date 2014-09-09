@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, abort, request, render_template, jsonify
+from flask import Flask, abort, request, render_template, Response
 import dateutil.parser
 from datetime import datetime
 import json
@@ -139,7 +139,7 @@ def api():
         #FIXME: let the webserver return the file, so that flask won't serve the file
         try:
             f = open(settings.SERVER_DATA_FILE, 'r')
-            weather_data = json.loads(f.read())
+            weather_raw = f.read()
         except Exception, e:
             weather_data = {'last_rain_intensity':None,
                             'last_rain':None,
@@ -148,8 +148,11 @@ def api():
                             'dry_since':None,
                             'last_update_rain':False,
                             }
+            weather_raw = json.dumps(weather_data)
 
-        return jsonify(weather_data)
+        response_content = weather_raw
+        response = Response(response=response_content, status=200, mimetype="application/json")
+        return response
 
 
 if __name__ == '__main__':
