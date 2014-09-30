@@ -9,6 +9,7 @@ from numpy import linalg, asarray, mean
 from numpy import array as np_array
 
 from scipy import ndimage
+from scipy.optimize import fmin
 #import matplotlib.pyplot as plt
 import numpy as np
 import uuid
@@ -485,7 +486,7 @@ class RainPredictor(object):
 
             except Exception, e:
                 print e
-                radius = 0
+                radius_abs = 0
 
             if settings.DEBUG:
                 print "last_pos: %s, mean %s"%(future_pos, mean)
@@ -493,6 +494,20 @@ class RainPredictor(object):
             last_time = history[0]['timestamp']
             last_diff = -1
             first_sample = True
+
+            #calculate min distance of cell center to location if it keeps moving like in the past 5minutes
+            try:
+                distance_to_location = lambda x: linalg.norm((self.center, self.center) - (x*mean + future_pos))
+                x_start= 0# start from x = 0
+                min_x = fmin(distance_to_location,x_start)
+                min_distance_to_location = distance_to_location(min_x)
+                if min_distance_to_location != 0:
+                    hit_factor = radius_abs/min_distance_to_location
+                else:
+                    hit_factor = 1000
+            except Exception, e:
+                min_distance_to_location = -1
+                hit_factor = 0
 
             #calculate future positions in increments of 5min #FIXME: check if the average of the movement is for 5/10min
             for i in range(1,10):
@@ -523,7 +538,8 @@ class RainPredictor(object):
                 #check if the cell will hit the location
                 if(diff-radius_abs < 0.5):
                     #hits.append({'history':history, 'dtime':forecast_sample['timestamp']-int(now), 'timestamp':forecast_sample['timestamp']})
-                    hits.append({'dtime':(forecast_sample['timestamp']-datetime.now()).total_seconds(), 'timestamp':forecast_sample['timestamp'], 'sample':forecast_sample})
+                    hits.append({'dtime':(forecast_sample['timestamp']-datetime.now()).total_seconds(), 'timestamp':forecast_sample['timestamp'], \
+                                'sample':forecast_sample, 'min_distance_cell_location':min_distance_to_location, 'hit_factor':hit_factor})
                     print forecast_sample['timestamp']
                     print (forecast_sample['timestamp']-datetime.now()).total_seconds()
                     if settings.DEBUG:
@@ -540,6 +556,7 @@ class RainPredictor(object):
         time_to_next_hit = None
         next_impact_time = None
         next_size = -1
+        minimal_distance = -1
 
         if hits and settings.DEBUG:
             print "****** impacts *******"
@@ -558,25 +575,14 @@ class RainPredictor(object):
                     next_impact_time = hit['timestamp']
                     time_to_next_hit_intensity = last_intensity
                     next_size = sample['size']
+                    minimal_distance = hit['min_distance_cell_location']
                 elif time_to_next_hit == hit['dtime'] and sample['intensity'] > time_to_next_hit_intensity:
                     time_to_next_hit = hit['dtime']
                     next_hit_intensity = last_intensity
                     next_impact_time = hit['timestamp']
                     next_size = sample['size']
+                    minimal_distance = hit['min_distance_cell_location']
 
-
-        if settings.TWEET_PREDICTION:
-            try:
-                if time_to_next_hit:
-                    from schifftszbaern.utils import send_tweet
-                    send_tweet("%s, %s, %s"%(str(next_impact_time)[:-2], next_hit_intensity, next_size))
-                    pass
-
-
-            except Exception, e:
-                print e
-                pass
-
-        return time_to_next_hit, next_size, next_impact_time
+        return time_to_next_hit, next_size, next_impact_time, hit_factor
 
 

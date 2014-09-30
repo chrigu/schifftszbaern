@@ -128,13 +128,26 @@ def schiffts():
         if current_data:
             predictor = RainPredictor(data_queue, current_data.timestamp, 18)
             try:
-                time_delta, size, impact_time = predictor.make_forecast()
+                time_delta, size, impact_time, hit_factor = predictor.make_forecast()
                 if settings.DEBUG:
                     print "next rain at %s (delta %s) with size %s"%(impact_time, int(time_delta), size)
 
                 next_hit['time_delta'] = time_delta
                 next_hit['size'] = size
-                next_hit['time'] = datetime.strftime(impact_time, settings.DATE_FORMAT)
+                next_hit['time'] = datetime.strftime(impact_time, "%H%M")
+                next_hit['hit_factor'] = hit_factor
+
+                if settings.TWEET_PREDICTION:
+                    try:
+                        #don't send prediction if there's an old next hit value
+                        if ((old_data.has_key('next_hit') and not old_data['next_hit']) or not old_data.has_key('next_hit')) and next_hit['time']:
+                            send_tweet("t:%s, d:%s, s:%s, hf: %s"%(next_hit['time'], next_hit['time_delta'], next_hit['size'], next_hit['hit_factor']))
+                            pass
+
+
+                    except Exception, e:
+                        print e
+                        pass
 
 
             except Exception, e:
