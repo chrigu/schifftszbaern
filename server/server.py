@@ -14,6 +14,28 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 
 
+def read_from_file(raw=False):
+    #read last saved data, if it fails set default values
+    try:
+        f = open(settings.SERVER_DATA_FILE, 'r')
+        weather_data = f.read()
+        if not raw:
+            weather_data = json.loads(weather_data)
+
+    except Exception, e:
+        weather_data = {'last_rain_intensity':None,
+                        'last_rain':None,
+                        'last_dry':None,
+                        'rain_since':None,
+                        'dry_since':None,
+                        'last_update_rain':False,
+                        }
+
+        if raw:
+            weather_data = json.dumps(weather_data)
+
+    return weather_data
+
 @app.route('/')
 def index():
     """
@@ -76,18 +98,7 @@ def update_weather():
     #verify password and check if data is present
     if(secret == settings.SECRET and not request.form['data'] == None):
 
-        #read last saved data, if it fails set default values
-        try:
-            f = open(settings.SERVER_DATA_FILE, 'r')
-            weather_data = json.loads(f.read())
-        except Exception, e:
-            weather_data = {'last_rain_intensity':None,
-                            'last_rain':None,
-                            'last_dry':None,
-                            'rain_since':None,
-                            'dry_since':None,
-                            'last_update_rain':False,
-                            }
+        weather_data = read_from_file()
         
         try:
             data = json.loads(request.form['data'])
@@ -134,23 +145,25 @@ def update_weather():
 
 
 @app.route('/api/schiffts')
-def api():
+def api_current():
         #read last saved data, if it fails return an error
         #FIXME: let the webserver return the file, so that flask won't serve the file
-        try:
-            f = open(settings.SERVER_DATA_FILE, 'r')
-            weather_raw = f.read()
-        except Exception, e:
-            weather_data = {'last_rain_intensity':None,
-                            'last_rain':None,
-                            'last_dry':None,
-                            'rain_since':None,
-                            'dry_since':None,
-                            'last_update_rain':False,
-                            }
-            weather_raw = json.dumps(weather_data)
+        weather_raw = read_from_file(raw=True)
 
         response_content = weather_raw
+        response = Response(response=response_content, status=200, mimetype="application/json")
+        return response
+
+@app.route('/api/chunntschoschiffe')
+def api_forecast():
+        #read last saved data, if it fails return an error
+        #FIXME: let the webserver return the file, so that flask won't serve the file
+        weather_data = read_from_file()
+
+        if weather_data.has_key('prediction'):
+            response_content = json.dumps(weather_data['prediction'])
+        else:
+            response_content = json.dumps({'prediction': {}})
         response = Response(response=response_content, status=200, mimetype="application/json")
         return response
 
