@@ -14,24 +14,33 @@ class PredictionTests(unittest.TestCase):
 
     def test_20min(self):
         test_images = [{'timestamp':self.start_time, 'image':'test_20min_6.png'}, \
-                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_20min_5.png'},
-                        {'timestamp':self.start_time-timedelta(0,60*10), 'image':'test_20min_4.png'},
-                        {'timestamp':self.start_time-timedelta(0,60*15), 'image':'test_20min_3.png'},
-                        {'timestamp':self.start_time-timedelta(0,60*20), 'image':'test_20min_2.png'},
-                        {'timestamp':self.start_time-timedelta(0,60*25), 'image':'test_20min_1.png'}]
+                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_20min_5.png'}]
+                        # {'timestamp':self.start_time-timedelta(0,60*10), 'image':'test_20min_4.png'},
+                        # {'timestamp':self.start_time-timedelta(0,60*15), 'image':'test_20min_3.png'},
+                        # {'timestamp':self.start_time-timedelta(0,60*20), 'image':'test_20min_2.png'},
+                        # {'timestamp':self.start_time-timedelta(0,60*25), 'image':'test_20min_1.png'}]
 
         self._test_images(test_images, 20)
 
 
     def test_40min(self):
         test_images = [{'timestamp':self.start_time, 'image':'test_40min_6.png'}, \
-                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_40min_5.png'},
-                        {'timestamp':self.start_time-timedelta(0,60*10), 'image':'test_40min_4.png'},
-                        {'timestamp':self.start_time-timedelta(0,60*15), 'image':'test_40min_3.png'},
-                        {'timestamp':self.start_time-timedelta(0,60*20), 'image':'test_40min_2.png'},
-                        {'timestamp':self.start_time-timedelta(0,60*25), 'image':'test_40min_1.png'}]
+                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_40min_5.png'}]
+                        # {'timestamp':self.start_time-timedelta(0,60*10), 'image':'test_40min_4.png'},
+                        # {'timestamp':self.start_time-timedelta(0,60*15), 'image':'test_40min_3.png'},
+                        # {'timestamp':self.start_time-timedelta(0,60*20), 'image':'test_40min_2.png'},
+                        # {'timestamp':self.start_time-timedelta(0,60*25), 'image':'test_40min_1.png'}]
 
         self._test_images(test_images, 40)
+
+
+    def test_45min(self):
+
+        test_images = [{'timestamp':self.start_time, 'image':'test_45min_2.png'}, \
+                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_45min_1.png'}]
+
+        self._test_images(test_images, 45)
+
 
     def test(self):
 
@@ -78,8 +87,8 @@ class PredictionTests(unittest.TestCase):
 
         predictor = RainPredictor(new_queue, current_data.timestamp, 18)
         try:
-            delta, size, time = predictor.make_forecast()
-            print time
+            delta, size, time, hit_factor = predictor.make_forecast()
+            print "test: %s - time: %s (delta %s), hit_factor: %s"%(minutes_to_hit, time, delta/60, hit_factor)
         except Exception, e:
             print e
             pass
