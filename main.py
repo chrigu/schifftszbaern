@@ -131,7 +131,7 @@ def schiffts():
             try:
                 time_delta, size, impact_time, hit_factor = predictor.make_forecast()
                 if settings.DEBUG:
-                    print "next rain at %s (delta %s) with size %s"%(impact_time, int(time_delta), size)
+                    print "next rain at %s (delta %s) with size %s, hf: %s"%(impact_time, int(time_delta), size, hit_factor)
 
                 next_hit['time_delta'] = time_delta
                 next_hit['size'] = size
@@ -179,8 +179,11 @@ def schiffts():
     with open(settings.COLLECTOR_DATA_FILE, 'w') as outfile:
         json.dump(save_data, outfile, default=encode)
 
+    #make data
+    data_to_send = {'prediction':next_hit, 'current_data':current_data.location}
+
     #send data to server
-    payload = {'secret':settings.SECRET, 'data':json.dumps(current_data.location)}
+    payload = {'secret':settings.SECRET, 'data':json.dumps(data_to_send)}
     if settings.DEBUG:
         print "data for server: %s"%payload
     try:

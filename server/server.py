@@ -106,31 +106,35 @@ def update_weather():
 
             #update weather_data, if necessary
             #update contains rain
-            if data.has_key('intensity'):
-                weather_data['last_rain_intensity'] = data['intensity']
+            if data.has_key('current_data'):
+                if data['current_data'].has_key('intensity'):
+                    weather_data['last_rain_intensity'] = data['current_data']['intensity']
 
-                if weather_data.has_key('last_update_rain'):
-                    if weather_data['last_update_rain'] == False or weather_data['rain_since'] == None:
+                    if weather_data.has_key('last_update_rain'):
+                        if weather_data['last_update_rain'] == False or weather_data['rain_since'] == None:
+                            weather_data['rain_since'] = now
+                    else:
                         weather_data['rain_since'] = now
+
+
+                    weather_data['last_rain'] = now
+                    weather_data['last_update_rain'] = True    
+
+                #update contains no rain
                 else:
-                    weather_data['rain_since'] = now
 
+                    if weather_data.has_key('last_update_rain'):
+                        if weather_data['last_update_rain'] == True or weather_data['dry_since'] == None:
+                            weather_data['dry_since'] = now 
 
-                weather_data['last_rain'] = now
-                weather_data['last_update_rain'] = True    
+                    else:
+                        weather_data['dry_since'] = now
 
-            #update contains no rain
-            else:
+                    weather_data['last_dry'] = now
+                    weather_data['last_update_rain'] = False
 
-                if weather_data.has_key('last_update_rain'):
-                    if weather_data['last_update_rain'] == True or weather_data['dry_since'] == None:
-                        weather_data['dry_since'] = now 
-
-                else:
-                    weather_data['dry_since'] = now
-
-                weather_data['last_dry'] = now
-                weather_data['last_update_rain'] = False
+            if data.has_key('prediction'):
+                weather_data['prediction'] = data['prediction']
 
             with open(settings.SERVER_DATA_FILE, 'w') as outfile:
                 json.dump(weather_data, outfile)
