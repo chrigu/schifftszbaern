@@ -141,7 +141,7 @@ def schiffts():
                 if settings.TWEET_PREDICTION:
                     try:
                         #don't send prediction if there's an old next hit value
-                        if ((old_data.has_key('next_hit') and not old_data['next_hit']) or (not old_data.has_key('next_hit')) and next_hit['time']):
+                        if ((old_data.has_key('next_hit') and not old_data['next_hit']) or (not old_data.has_key('next_hit')) and next_hit['time'] and hit_factor > 1.2):
                             send_tweet("t:%s, d:%s, s:%s, hf: %s"%(next_hit['time'], next_hit['time_delta'], next_hit['size'], next_hit['hit_factor']))
 
 
