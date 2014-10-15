@@ -480,7 +480,7 @@ class RainPredictor(object):
             mean = coms.mean(axis=0)
 
             #get last position
-            future_pos = np_array(history[0]['center_of_mass'])
+            initial_position = np_array(history[0]['center_of_mass'])
             try:
                 radius_abs = math.sqrt(history[0]['size']/math.pi)
 
@@ -489,79 +489,25 @@ class RainPredictor(object):
                 radius_abs = 0
 
             if settings.DEBUG:
-                print "last_pos: %s, mean %s"%(future_pos, mean)
+                print "last_pos: %s, mean %s"%(initial_position, mean)
 
-            last_time = history[0]['timestamp']
-            last_diff = -1
-            first_sample = True
+            hit = self._find_future_hit(history[0], initial_position, radius_abs, mean, 0.5)
 
-            #calculate min distance of cell center to location if it keeps moving like in the past 5minutes
-            try:
-                distance_to_location = lambda x: linalg.norm((self.center, self.center) - (x*mean + future_pos))
-                x_start= 0# start from x = 0
-                min_x = fmin(distance_to_location,x_start)
-                min_distance_to_location = distance_to_location(min_x)
-                if min_distance_to_location != 0:
-                    hit_factor = radius_abs/min_distance_to_location
-                else:
-                    hit_factor = 1000
-            except Exception, e:
-                min_distance_to_location = -1
-                hit_factor = 0
-
-            #calculate future positions in increments of 5min #FIXME: check if the average of the movement is for 5/10min
-            for i in range(1,10):
-                future_pos = future_pos + mean 
-                forecast_sample = {}
-                forecast_sample['forecast'] = True
-                forecast_sample['center_of_mass'] = future_pos
-                forecast_sample['intensity'] = history[0]['intensity']
-                forecast_sample['size'] = history[0]['size']
-                time = last_time + timedelta(0,60*5*i)
-                forecast_sample['timestamp'] = time
-                history.append(forecast_sample)
-
-                #rain cells need to have a certain size
-                if forecast_sample['size'] < 3:# or not forecast_sample['forecast']:
-                    continue
-
-                radius_abs = math.sqrt(forecast_sample['size']/math.pi)
-                diff = linalg.norm((self.center, self.center) - np_array(forecast_sample['center_of_mass']))
-                if not first_sample:
-                    #check if the cell coming closer
-                    if diff > last_diff:
-                        forecast_sample['moving_away'] = True
-
-                if settings.DEBUG:
-                    print "%s %s - dist: %s - forecast: %s"%(forecast_sample['center_of_mass'], forecast_sample['size'], diff-radius_abs, forecast_sample['forecast'])
-                
-                #check if the cell will hit the location
-                if(diff-radius_abs < 0.5):
-                    #hits.append({'history':history, 'dtime':forecast_sample['timestamp']-int(now), 'timestamp':forecast_sample['timestamp']})
-                    hits.append({'dtime':(forecast_sample['timestamp']-datetime.now()).total_seconds(), 'timestamp':forecast_sample['timestamp'], \
-                                'sample':forecast_sample, 'min_distance_cell_location':min_distance_to_location, 'hit_factor':hit_factor})
-                    print forecast_sample['timestamp']
-                    print (forecast_sample['timestamp']-datetime.now()).total_seconds()
-                    if settings.DEBUG:
-                        print "last: %s, timestamp: %s, now: %s"%(self.last_timestamp, forecast_sample['timestamp']-self.last_timestamp, (self.last_timestamp-datetime.now()).total_seconds())
-                        print "direct hit"
-                    break
-
-                if first_sample:
-                    first_sample = False
-
-                last_diff = diff
+            if hit:
+                hits.append(hit)
 
         next_hit_intensity = None
         time_to_next_hit = None
         next_impact_time = None
         next_size = -1
         minimal_distance = -1
+        hit_factor = 0
 
         if hits and settings.DEBUG:
             print "****** impacts *******"
 
         #loop through all cells that'll hit the location and get the one that'll hit the location the soonest
+        #!FIXME: make function that gets the min value for dtime and the max value for size
         for hit in hits:
             last_intensity = None
             #for sample in hit['history']:
@@ -576,13 +522,76 @@ class RainPredictor(object):
                     time_to_next_hit_intensity = last_intensity
                     next_size = sample['size']
                     minimal_distance = hit['min_distance_cell_location']
+                    hit_factor = hit['hit_factor']
                 elif time_to_next_hit == hit['dtime'] and sample['intensity'] > time_to_next_hit_intensity:
                     time_to_next_hit = hit['dtime']
                     next_hit_intensity = last_intensity
                     next_impact_time = hit['timestamp']
                     next_size = sample['size']
                     minimal_distance = hit['min_distance_cell_location']
+                    hit_factor = hit['hit_factor']
 
         return time_to_next_hit, next_size, next_impact_time, hit_factor
 
+
+    def _find_min_center_distance(self, initial_position, mean_movement, radius_abs):
+        """
+        calculate min distance of cell center to location if it keeps moving like in the past 5minutes
+        """
+        try:
+            distance_to_location = lambda x: linalg.norm((self.center, self.center) - (x*mean_movement + initial_position))
+            x_start = 0# start from x = 0
+            min_x = fmin(distance_to_location,x_start, disp=0)
+            min_distance_to_location = distance_to_location(min_x)
+            if min_distance_to_location != 0:
+                hit_factor = radius_abs/min_distance_to_location
+            else:
+                hit_factor = 1000
+
+        except Exception, e:
+            min_distance_to_location = -1
+            hit_factor = 0
+
+        return hit_factor, min_distance_to_location
+
+
+    def _find_future_hit(self, initial_sample, initial_position, radius_abs, mean_movement, tolerance):
+            """
+            calcualte minimum distance of the cell's border to the location if it keesp moving at the same speed as in 
+            the past 5 minutes. If it's < 0.5 the cell hits the location.
+            """
+
+            hit_factor, min_distance_to_location = self._find_min_center_distance(initial_position, mean_movement, radius_abs)
+
+            try:
+                last_time = initial_sample['timestamp']
+                if initial_sample['size'] > 3:
+                    radius_distance_to_location = lambda x: math.fabs(linalg.norm((self.center, self.center) - (x*mean_movement + initial_position)) - (radius_abs+tolerance))
+                    x_start = 0
+                    min_x = fmin(radius_distance_to_location,x_start, disp=0)[0]
+                    min_radius_distance_to_location = radius_distance_to_location(min_x)
+                    forecast_sample = {}
+                    forecast_sample['forecast'] = True
+                    forecast_sample['center_of_mass'] = (min_x*mean_movement + initial_position)
+                    forecast_sample['intensity'] = initial_sample['intensity']
+                    forecast_sample['size'] = initial_sample['size']
+                    time = last_time + timedelta(0,60*5*min_x)
+                    forecast_sample['timestamp'] = time
+                    #history.append(forecast_sample)
+                    if settings.DEBUG:
+                        print "%s %s - dist: %s - forecast: %s"%(forecast_sample['center_of_mass'], forecast_sample['size'], min_x, forecast_sample['forecast'])
+                    
+                    #make sure the minimum value is really a hit
+                    if min_radius_distance_to_location < tolerance:
+                        print forecast_sample['timestamp']
+                        print (forecast_sample['timestamp']-datetime.now()).total_seconds()
+                        if settings.DEBUG:
+                            print "direct hit"
+                            print "last: %s, timestamp: %s, now: %s"%(self.last_timestamp, forecast_sample['timestamp']-self.last_timestamp, (self.last_timestamp-datetime.now()).total_seconds())
+
+                        return {'dtime':(forecast_sample['timestamp']-datetime.now()).total_seconds(), 'timestamp':forecast_sample['timestamp'], \
+                                    'sample':forecast_sample, 'min_distance_cell_location':min_distance_to_location, 'hit_factor':hit_factor}
+                                    
+            except Exception, e:
+                return None
 

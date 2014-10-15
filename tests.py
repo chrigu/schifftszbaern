@@ -12,42 +12,38 @@ class PredictionTests(unittest.TestCase):
     def setUp(self):
         self.start_time = datetime.now()
 
-    def test_20min(self):
-        test_images = [{'timestamp':self.start_time, 'image':'test_20min_6.png'}, \
-                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_20min_5.png'}]
+    def test_16min(self):
+        test_images = [{'timestamp':self.start_time, 'image':'test_16min_6.png'}, \
+                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_16min_5.png'}]
                         # {'timestamp':self.start_time-timedelta(0,60*10), 'image':'test_20min_4.png'},
                         # {'timestamp':self.start_time-timedelta(0,60*15), 'image':'test_20min_3.png'},
                         # {'timestamp':self.start_time-timedelta(0,60*20), 'image':'test_20min_2.png'},
                         # {'timestamp':self.start_time-timedelta(0,60*25), 'image':'test_20min_1.png'}]
 
-        self._test_images(test_images, 20)
+        self._test_images(test_images, 16)
 
 
     def test_40min(self):
         test_images = [{'timestamp':self.start_time, 'image':'test_40min_6.png'}, \
                         {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_40min_5.png'}]
-                        # {'timestamp':self.start_time-timedelta(0,60*10), 'image':'test_40min_4.png'},
-                        # {'timestamp':self.start_time-timedelta(0,60*15), 'image':'test_40min_3.png'},
-                        # {'timestamp':self.start_time-timedelta(0,60*20), 'image':'test_40min_2.png'},
-                        # {'timestamp':self.start_time-timedelta(0,60*25), 'image':'test_40min_1.png'}]
 
         self._test_images(test_images, 40)
 
 
-    def test_45min(self):
+    def test_43min(self):
 
-        test_images = [{'timestamp':self.start_time, 'image':'test_45min_2.png'}, \
-                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_45min_1.png'}]
+        test_images = [{'timestamp':self.start_time, 'image':'test_43min_2.png'}, \
+                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_43min_1.png'}]
 
-        self._test_images(test_images, 45)
+        self._test_images(test_images, 43)
 
 
-    def test(self):
+    # def test(self):
 
-        test_images = [{'timestamp':self.start_time, 'image':'test_6.png'}, \
-                        {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_5.png'}]
+    #     test_images = [{'timestamp':self.start_time, 'image':'test_6.png'}, \
+    #                     {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_5.png'}]
 
-        self._test_images(test_images, 20)
+    #     self._test_images(test_images, 20)
 
 
     def _test_images(self, images, minutes_to_hit):
