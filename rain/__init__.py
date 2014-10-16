@@ -581,8 +581,9 @@ class RainPredictor(object):
                     if settings.DEBUG:
                         print "%s %s - dist: %s - forecast: %s"%(forecast_sample['center_of_mass'], forecast_sample['size'], min_x, forecast_sample['forecast'])
                     
-                    #make sure the minimum value is really a hit
-                    if min_radius_distance_to_location < tolerance:
+                    #make sure the minimum value is really a hit a (somewhere from 0 to 60min in the future and within a certain
+                    #distance to the location)
+                    if (0 < min_x < 12) and (min_radius_distance_to_location < tolerance):
                         print forecast_sample['timestamp']
                         print (forecast_sample['timestamp']-datetime.now()).total_seconds()
                         if settings.DEBUG:
