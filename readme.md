@@ -4,7 +4,7 @@
 
 ##Introduction
 
-"Schiffts z'Bärn" (is it raining in Berne) is a serivce that broadcasts (over Twitter and/or a webpage) if it is currently raining in Berne, Switzerland (the service can be configured for other locations in Switzerland too).
+"Schiffts z'Bärn" (is it raining in Berne) is a serivce that broadcasts (over Twitter and/or a webpage) if it is currently raining in Berne, Switzerland (the service can be configured for other locations in Switzerland too). With some additional hardware it is also possible to display rain warnings on a ambient device (light cloud).
 
 The rain information is pulled from the [Swiss National TV's rain radar webpage (SRF)](http://www.srf.ch/meteo/radar). On this website the rain is displayed as an overlay on a map. The overlay is just a PNG where colored pixels represent rain cells and this information is used as the data source.
 
@@ -30,7 +30,7 @@ Python 2.7 with the following libraries (some are quite a pita to install.....)
 
 ###Configure for your location
 
-In order to configure the service for other locations in Switzerland you need to get the location's position on the overlay PNG. And this is the tricky part. 
+In order to configure the service for other locations in Switzerland you need to get the location's position on the overlay PNG. And this is the tricky part.
 
 The easiest approach is to identify a rain formation on SRF's rain radar that is just over your desired location for a given time say 15:00 (You need to do that on the their website as there's the map below the overlay with all geographic information). After that, download the PNG from the website (look out for files like http://www.srfcdn.ch/meteo/nsradar/media/web/PPIMERCATOR.20140722150000.png in your browser's Web Inspector) for the time you chose and open it somewhere where you can measure the pixels. Try to find the rain formation that you identified earlier again on the downloaded PNG. When you find it you just have to measure the x-pixels (from the left edge) and the y-pixels (trom the top edge). This is your locations position that you need to change in the settings. Easy, right?
 
@@ -77,16 +77,57 @@ The configuration can be found in settings.py. The following settings are availa
 | ACCESS_TOKEN_SECRET  |   String      |   Token secret for your twitter account|
 | TWEET_STATUS  |   Boolean      |   Tweet if it starts or stops raining|
 | TWEET_PREDICTION  |   Boolean      |    Tweet rain prediction|
-| SERVER_DATA_FILE | String | Path to the file where the server's data should be stored | 
+| SERVER_DATA_FILE | String | Path to the file where the server's data should be stored |
 | UPDATE_PATH | String | Path on the weberver where the updates will be sent |
 | SERVER_URL | String | URL where the updates will be sent to |
 | SECRET | String | Secret required for sending updates to the server |
 | DUNNO_MESSAGE | String | Message to display when no data is available |
 | DISPLAY_DATE_FORMAT | Date format | Format used to display the date on the website. Default `%d.%m.%Y %H:%M` |
 
+##Light cloud
+The light cloud is a Arduino or Espurino with a WLAN module that starts to blink when rain cells are approaching the location. The blinking's frequency increases when the cell get closer to the location.
+
+###Requirements
+* Arduino or Espurino
+* [CC3000 Wifi module](www.adafruit.com/product/1469)
+* [NeoPixel LED](http://www.adafruit.com/category/168)
+
+###Wiring
+
+| Arduino Pin        | Component           | Pin  |
+|--------------------|---------------------|------|
+| GND  | CC3000 |  GND |
+| Vbat | CC3000 | Vin |
+| B3 | CC3000 | CLK |
+| B4 | CC3000 | MISO |
+| B5 | CC3000 | MOSI |
+| B6 | CC3000 | CS |
+| B7 | CC3000 | Vben |
+| B8 | CC3000 | IRQ |
+| GND | NeoPixel | GND |
+| B15 | NeoPixel | Din |
+| Vbat | NeoPixel | Vin |
+
+| Espurino Pin        | Component           | Pin  |
+|---------------------|---------------------|------|
+| GND  | CC3000 |  GND |
+| Vbat | CC3000 | Vin |
+| B3 | CC3000 | CLK |
+| B4 | CC3000 | MISO |
+| B5 | CC3000 | MOSI |
+| B6 | CC3000 | CS |
+| B7 | CC3000 | Vben |
+| B8 | CC3000 | IRQ |
+| GND | NeoPixel | GND |
+| B15 | NeoPixel | Din |
+| Vbat | NeoPixel | Vin |
+
+###Code
+In the code you only need to change the the WLAN settings to get things working (Esupruino: schiffts.js (ssid / passphrase), Arduino: light_cloud_wifi.ino (WLAN_SSID / WLAN_SSID)).
+
 ##Todo
 
 * Clean code & hierarchy
 * Documentation (obviously)
 * Ambient device for prediction
-* Add scss files for css
+* 1 config file for everything
