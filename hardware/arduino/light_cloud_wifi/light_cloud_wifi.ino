@@ -90,6 +90,35 @@ void setup()
   delay(500);
   strip.setPixelColor(0, Color(0, 0, 0));
   strip.show();
+  
+  /* Initialise the module */
+  Serial.println(F("\nInitializing..."));
+  if (!cc3000.begin())
+  {
+    Serial.println(F("Couldn't begin()! Check your wiring?"));
+    while(1);
+  }
+
+  Serial.print(F("\nAttempting to connect to ")); Serial.println(WLAN_SSID);
+  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
+    Serial.println(F("Failed!"));
+    while(1);
+  }
+
+  Serial.println(F("Connected!"));
+
+  /* Wait for DHCP to complete */
+  Serial.println(F("Request DHCP"));
+  while (!cc3000.checkDHCP())
+  {
+    delay(100); // ToDo: Insert a DHCP timeout!
+  }
+
+  /* Display the IP address DNS, Gateway, etc. */
+  while (! displayConnectionDetails()) {
+    delay(1000);
+  }
+
 }
 
 
@@ -266,33 +295,6 @@ bool displayConnectionDetails(void)
 /**************************************************************************/
 String getData(void)
 {
-  /* Initialise the module */
-  Serial.println(F("\nInitializing..."));
-  if (!cc3000.begin())
-  {
-    Serial.println(F("Couldn't begin()! Check your wiring?"));
-    while(1);
-  }
-
-  Serial.print(F("\nAttempting to connect to ")); Serial.println(WLAN_SSID);
-  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
-    Serial.println(F("Failed!"));
-    while(1);
-  }
-
-  Serial.println(F("Connected!"));
-
-  /* Wait for DHCP to complete */
-  Serial.println(F("Request DHCP"));
-  while (!cc3000.checkDHCP())
-  {
-    delay(100); // ToDo: Insert a DHCP timeout!
-  }
-
-  /* Display the IP address DNS, Gateway, etc. */
-  while (! displayConnectionDetails()) {
-    delay(1000);
-  }
 
   ip = 0;
   // Try looking up the website's IP address
@@ -357,8 +359,8 @@ String getData(void)
 
   /* You need to make sure to clean up after yourself or the CC3000 can freak out */
   /* the next time your try to connect ... */
-  Serial.println(F("\n\nDisconnecting"));
-  cc3000.disconnect();
+  //Serial.println(F("\n\nDisconnecting"));
+  //cc3000.disconnect();
 
   return json_response;
 }
