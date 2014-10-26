@@ -5,14 +5,17 @@ import dateutil.parser
 from datetime import datetime
 import json
 import os
+import pymongo
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.sys.path.insert(0,parentdir)  #FIXME: only used for localhost
 import settings
 
-
 app = Flask(__name__)
-app.config.from_object(__name__)
+app.config.from_object(__name__) #FIXME: use app.config for configuration
 
+#connect to mongodb
+connection = pymongo.Connection(settings.MONGODB_HOST, settings.MONGODB_PORT)
+db = connection.schiffts
 
 def read_from_file(raw=False):
     #read last saved data, if it fails set default values
@@ -35,6 +38,17 @@ def read_from_file(raw=False):
             weather_data = json.dumps(weather_data)
 
     return weather_data
+
+def check_password(form):
+    try:
+        secret = form['secret']
+        #verify password and check if data is present
+        if(secret == settings.SECRET and not form['data'] == None):
+            return True
+    except Exception, e:
+        pass
+
+    return False
 
 @app.route('/')
 def index():
@@ -87,16 +101,13 @@ def index():
                             rain_since=rain_since, last_update=last_update)
 
 
-@app.route(settings.UPDATE_PATH, methods=['POST'])
-def update_weather():
+@app.route(settings.RAIN_UPDATE_PATH, methods=['POST'])
+def update_rain():
     """
     Called by the rain updater
     """
     
-    secret = request.form['secret']
-
-    #verify password and check if data is present
-    if(secret == settings.SECRET and not request.form['data'] == None):
+    if check_password(request.form):
 
         weather_data = read_from_file()
         
@@ -148,6 +159,30 @@ def update_weather():
        abort(401)
 
 
+#FIXME: use decorator
+@app.route(settings.WEATHER_UPDATE_PATH, methods=['POST'])
+def update_weather():
+    """
+    Called by the weather updater. Write data to db.
+    """
+    if check_password(request.form) and request.form.has_key('data'):
+        try:
+            data = json.loads(request.form['data'])
+            weather_samples = db.weather_samples
+            now = datetime.utcnow()
+        
+            sample = {'weather': data['weather'], 'temperature':data['temperature'],
+                    'time': now}
+
+            weather_samples.insert(sample)
+        except Exception, e:
+            print e
+
+        return 'merci'
+    else:
+       abort(401)
+
+
 @app.route('/api/schiffts')
 def api_current():
         #read last saved data, if it fails return an error
@@ -157,6 +192,7 @@ def api_current():
         response_content = weather_raw
         response = Response(response=response_content, status=200, mimetype="application/json")
         return response
+
 
 @app.route('/api/chunntschoschiffe')
 def api_forecast():

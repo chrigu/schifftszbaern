@@ -5,3 +5,6 @@ pypng
 scipy
 PIL
 python-dateutil
+requests
+lxml
+pymongo
