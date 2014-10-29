@@ -12,7 +12,7 @@
 <script src="{{ url_for('static', filename='js/modernizr.js') }}"></script>
 <title>Schiffts z'Bärn? | Beta</title>
 </head>
-<body class="{% if rain %}bad-weather{% else %}good-weather{% endif %}">
+<body class="{{body_classes}}">
 <div id="main">
   <div class="block">
     <div class="centered">

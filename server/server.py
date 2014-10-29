@@ -61,6 +61,7 @@ def index():
     rain_since = settings.DUNNO_MESSAGE
     dry_since = settings.DUNNO_MESSAGE
     last_update = None
+    body_classes = ""
 
     dt = None
 
@@ -96,9 +97,35 @@ def index():
 
     except Exception, e:
         rain = False
-    
+
+    #get latest weather data
+    try:
+        latest_sample = db.weather_samples.find().sort('time', pymongo.DESCENDING)[0]
+
+        #only display weather if the latest value is not older than 1h
+        time_diff = datetime.utcnow() - latest_sample['time']
+        time_diff_minutes = time_diff.days * 1440 + time_diff.seconds #py 2.6 :-/ use time_diff.total_seconds() in 2.7
+        if time_diff_minutes < 60*60:
+            #replace strings in weather attributes and concate them
+            replace_attrs = map(lambda weather_string: weather_string.replace(" ", "-"), latest_sample['weather'])
+            for attribute in latest_sample['weather']:
+                body_classes += "%s "%attribute
+
+        body_classes = body_classes.strip()
+
+    except Exception, e:
+        body_classes = "no-weather-data"
+
+    if body_classes == "":
+        body_classes = "no-weather-data"
+
+    if rain:
+        body_classes += " bad-weather"
+    else:
+        body_classes += " good-weather"
+
     return render_template('index.html', rain=rain, last_rain=last_rain, last_dry=last_dry, dry_since=dry_since, \
-                            rain_since=rain_since, last_update=last_update)
+                            rain_since=rain_since, last_update=last_update, body_classes=body_classes)
 
 
 @app.route(settings.RAIN_UPDATE_PATH, methods=['POST'])
@@ -209,5 +236,6 @@ def api_forecast():
 
 
 if __name__ == '__main__':
+    app.debug = settings.DEBUG
     app.run()
     
