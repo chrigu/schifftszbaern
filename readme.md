@@ -9,7 +9,7 @@
 The rain information is pulled from the [Swiss National TV's rain radar webpage (SRF)](http://www.srf.ch/meteo/radar). On this website the rain is displayed as an overlay on a map. The overlay is just a PNG where colored pixels represent rain cells and this information is used as the data source.
 
 ##Quickstart for the impatient
-1. Install the required Pyhton packages via `pip install -r requirements.txt`
+1. Install the required Pyhton packages via `pip install -r requirements/base.txt`
 2. Run `cp settings.sample.py settings.py`
 3. Run `python main.py`
 5. On the terminal you should see some output, but it should state somewhere "raining now: True/False"
@@ -25,8 +25,11 @@ Python 2.7 with the following libraries (some are quite a pita to install.....)
 * PIL
 * pypng
 * python_twitter
-* flask (only for website)
-* dateutil (only for website)
+* Flask (only for website)
+* Dateutil (only for website)
+* Requests
+* PyMongo (only if you use the weather crawler)
+* LXML (only if you use the weather crawler)
 
 ###Configure for your location
 
@@ -50,6 +53,16 @@ Setup & register a [twitter app](https://apps.twitter.com/app/new) with write pe
 ####Token & Token Secret
 
 You can run `python get_token.py` (requires the oauth2 package) and it will take you through the process of creating a token and token secret.
+
+####Weather Data
+
+*beta*
+
+Currently it can be configured that the services fetches the current weather information about Berne (for the time being only this location). The information contains the current situation (rain, fog, ...) and the temperature. This feature requires a MongoDB on the server side.
+
+You need to install the required packages with `pip install -r requirements/weather_fetcher.txt`
+
+The weather information is fetched from the [Federal Office of Meteorology and Climatology MeteoSwiss'](http://www.sma.ch) website. The weather is updated every 30 minutes.
 
 ##Server Setup
 

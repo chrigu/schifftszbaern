@@ -5,3 +5,4 @@ pypng
 scipy
 PIL
 python-dateutil
+requests
