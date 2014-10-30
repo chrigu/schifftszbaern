@@ -44,18 +44,18 @@ html, body, #main {
 svg {
   display: none; }
 
-.bad-weather {
+.rain {
   background: silver; }
-  .bad-weather > .arrow {
+  .rain > .arrow {
     border-color: transparent transparent silver transparent; }
-  .bad-weather .centered {
+  .rain .centered {
     margin-top: 2em; }
 
-.good-weather {
+.no-rain {
   background: #58c6ff; }
-  .good-weather > .arrow {
+  .no-rain > .arrow {
     border-color: transparent transparent #58c6ff transparent; }
-  .good-weather .centered {
+  .no-rain .centered {
     margin-top: 10em; }
 
 .arrow {
@@ -69,7 +69,7 @@ svg {
   border-color: transparent transparent #ffffff transparent;
   fill: #ffffff; }
 
-.svg.svgclippaths.inlinesvg .bad-weather .weather {
+.svg.svgclippaths.inlinesvg .rain .weather {
   display: inline; }
 
 /* This parent can be any width and height */
@@ -260,5 +260,5 @@ footer {
   .weather {
     height: 150px; }
 
-  .good-weather .centered {
+  .no-rain .centered {
     margin-top: 5em; } }

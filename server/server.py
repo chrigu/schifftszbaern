@@ -120,9 +120,9 @@ def index():
         body_classes = "no-weather-data"
 
     if rain:
-        body_classes += " bad-weather"
+        body_classes += " rain"
     else:
-        body_classes += " good-weather"
+        body_classes += " no-rain"
 
     return render_template('index.html', rain=rain, last_rain=last_rain, last_dry=last_dry, dry_since=dry_since, \
                             rain_since=rain_since, last_update=last_update, body_classes=body_classes)
