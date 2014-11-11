@@ -519,7 +519,7 @@ class RainPredictor(object):
                         print sample
                     time_to_next_hit = hit['dtime']
                     next_impact_time = hit['timestamp']
-                    time_to_next_hit_intensity = last_intensity
+                    next_hit_intensity = last_intensity
                     next_size = sample['size']
                     minimal_distance = hit['min_distance_cell_location']
                     hit_factor = hit['hit_factor']
@@ -531,7 +531,7 @@ class RainPredictor(object):
                     minimal_distance = hit['min_distance_cell_location']
                     hit_factor = hit['hit_factor']
 
-        return time_to_next_hit, next_size, next_impact_time, hit_factor
+        return time_to_next_hit, next_size, next_impact_time, hit_factor, next_hit_intensity
 
 
     def _find_min_center_distance(self, initial_position, mean_movement, radius_abs):

@@ -40,6 +40,7 @@ def schiffts():
     last_rain = None
     last_dry = None
     next_hit = {}
+    intensity = ""
 
     #get date
     now = datetime.now()
@@ -119,6 +120,7 @@ def schiffts():
         rain_now = True
         last_rain = current_data.timestamp
         last_dry = old_last_dry
+        intensity = current_data.location['intensity']
 
     else:
         rain_now = False
@@ -129,7 +131,7 @@ def schiffts():
         if current_data:
             predictor = RainPredictor(data_queue, current_data.timestamp, 18)
             try:
-                time_delta, size, impact_time, hit_factor = predictor.make_forecast()
+                time_delta, size, impact_time, hit_factor, hit_intensity = predictor.make_forecast()
                 if settings.DEBUG:
                     print "next rain at %s (delta %s) with size %s, hf: %s"%(impact_time, int(time_delta), size, hit_factor)
 
@@ -137,12 +139,13 @@ def schiffts():
                 next_hit['size'] = size
                 next_hit['time'] = datetime.strftime(impact_time, "%H%M")
                 next_hit['hit_factor'] = hit_factor
+                next_hit['intensity'] = hit_intensity
 
                 if settings.TWEET_PREDICTION:
                     try:
                         #don't send prediction if there's an old next hit value
                         if (((old_data.has_key('next_hit') and not old_data['next_hit']) or (not old_data.has_key('next_hit'))) and next_hit['time'] and hit_factor > 1.2):
-                            send_tweet("t:%s, d:%s, s:%s, hf: %s"%(next_hit['time'], next_hit['time_delta'], next_hit['size'], next_hit['hit_factor']))
+                            send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s"%(next_hit['time'], next_hit['time_delta'], next_hit['size'], next_hit['hit_factor'], next_hit['intensity']))
 
 
                     except Exception, e:
@@ -174,7 +177,7 @@ def schiffts():
 
     #save data to file
     save_data = {'last_update':last_update, 'queue':queue_to_save, 'last_sample_rain':rain_now, 'last_dry':last_dry_string, \
-                'last_rain':last_rain_string, 'next_hit':next_hit}
+                'last_rain':last_rain_string, 'next_hit':next_hit, 'intensity':intensity}
 
     with open(settings.COLLECTOR_DATA_FILE, 'w') as outfile:
         json.dump(save_data, outfile, default=encode)
