@@ -83,13 +83,87 @@ class PredictionTests(unittest.TestCase):
 
         predictor = RainPredictor(new_queue, current_data.timestamp, 18)
         try:
-            delta, size, time, hit_factor = predictor.make_forecast()
+            delta, size, time, hit_factor, intensity = predictor.make_forecast()
             print "test: %s - time: %s (delta %s), hit_factor: %s"%(minutes_to_hit, time, delta/60, hit_factor)
         except Exception, e:
             print e
             pass
         print delta
         self.assertTrue(delta >= (minutes_to_hit-0.5)*60 and delta <= (minutes_to_hit+0.5)*60)
+
+
+class IntensityTests(unittest.TestCase):
+
+    def setUp(self):
+        self.start_time = datetime.now()
+
+    def test_rain_1mm(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_rain_1mm.png'}
+
+        self._test_image(test_image, 0)
+
+    def test_rain_3mm(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_rain_3mm.png'}
+
+        self._test_image(test_image, 1)
+
+    def test_rain_10mm(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_rain_10mm.png'}
+
+        self._test_image(test_image, 2)
+
+    def test_rain_30mm(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_rain_30mm.png'}
+
+        self._test_image(test_image, 3)
+
+    def test_rain_100mm(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_rain_100mm.png'}
+
+        self._test_image(test_image, 4)
+
+    def test_rain_gt_100mm(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_rain_gt_100mm.png'}
+
+        self._test_image(test_image, 5)
+
+    def test_snow_flakes(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_snow_flakes.png'}
+
+        self._test_image(test_image, 10)
+
+    def test_snow_weak(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_snow_weak.png'}
+
+        self._test_image(test_image, 11)
+
+    def test_snow_moderate(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_snow_moderate.png'}
+
+        self._test_image(test_image, 12)
+
+    def test_snow_strong(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_snow_strong.png'}
+
+        self._test_image(test_image, 13)
+
+    def test_snow_heavy(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_snow_heavy.png'}
+
+        self._test_image(test_image, 14)
+
+    def test_snow_very_heavy(self):
+        test_image = {'timestamp':self.start_time, 'image':'test_snow_very_heavy.png'}
+
+        self._test_image(test_image, 15)
+
+    def _test_image(self, test_image, intensity):
+
+        measurement = Measurement((settings.X_LOCATION, settings.Y_LOCATION), test_image['timestamp'], 3, 105, \
+                                        url='file:%s/testimages/%s'%(os.path.dirname(os.path.realpath(__file__)), test_image['image']))
+
+        current_data = measurement.rain_at_position(settings.X_LOCATION, settings.Y_LOCATION)
+        self.assertEqual(current_data['intensity'], intensity)
 
 
 if __name__ == '__main__':
