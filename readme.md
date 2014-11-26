@@ -144,3 +144,5 @@ In the code you only need to change the the WLAN settings to get things working 
 * Documentation (obviously)
 * Ambient device for prediction
 * 1 config file for everything
+* remove magic numbers
+* setting for mongodb

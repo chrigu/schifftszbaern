@@ -596,3 +596,19 @@ class RainPredictor(object):
             except Exception, e:
                 return None
 
+
+class AmbientDataFetcher(object):
+    """
+    fetches weather data from http://data.netcetera.com/smn/smn/<code>
+    """
+    @staticmethod
+    def get_temperature(location_code):
+        import requests
+        request = requests.get('http://data.netcetera.com/smn/smn/%s'%location_code)
+        if request.status_code == 200:
+            return 200, request.json()['temperature']
+        else:
+            return request.status_code, 0
+
+
+

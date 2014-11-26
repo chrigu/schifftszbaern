@@ -174,6 +174,11 @@ def update_rain():
             if data.has_key('prediction'):
                 weather_data['prediction'] = data['prediction']
 
+            if data.has_key('temperature') and data['temperature'].has_key('status') and data['temperature']['status'] == 200:
+                if data['temperature'].has_key('temperature'):
+                    weather_data['temperature'] = data['temperature']['temperature']
+
+
             with open(settings.SERVER_DATA_FILE, 'w') as outfile:
                 json.dump(weather_data, outfile)
 

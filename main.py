@@ -41,6 +41,7 @@ def schiffts():
     last_dry = None
     next_hit = {}
     intensity = ""
+    temperature_data = {'status': 0}
 
     #get date
     now = datetime.now()
@@ -159,6 +160,12 @@ def schiffts():
     if settings.DEBUG:
         print "raining now: %s, raining before: %s"%(rain_now, old_rain)
 
+    if settings.GET_TEMPERATURE:
+        from rain import AmbientDataFetcher
+        temperature_data['status'], temperature_data['temperature'] = AmbientDataFetcher.get_temperature(settings.SMN_CODE)
+        if settings.DEBUG:
+            print "temperature data: %s"%temperature_data
+
     #update twitter if state changed
     if rain_now != old_rain and settings.TWEET_STATUS:
         tweet_status(rain_now)
@@ -183,7 +190,7 @@ def schiffts():
         json.dump(save_data, outfile, default=encode)
 
     #make data
-    data_to_send = {'prediction':next_hit, 'current_data':current_data.location}
+    data_to_send = {'prediction':next_hit, 'current_data':current_data.location, 'temperature':temperature_data}
 
     #send data to server
     payload = {'secret':settings.SECRET, 'data':json.dumps(data_to_send)}

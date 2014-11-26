@@ -21,6 +21,12 @@ COLLECTOR_DATA_FILE = 'weather_data.json'
 #number of samples to use for prediction (> 1)
 NO_SAMPLES = 2
 
+#code for smn measurement location
+SMN_CODE = 'BER'
+
+#get termperature
+GET_TEMPERATURE = True
+
 #Twitter
 ########
 
