@@ -141,16 +141,40 @@ footer {
   footer li:last-child {
     margin-top: 1em; }
 
-.raindrop {
+.raindrop, .snowflake {
   -webkit-animation-iteration-count: infinite;
   -webkit-animation-timing-function: linear;
   -webkit-transform-origin: 50% 50%;
   -webkit-animation-duration: 18s;
   -webkit-animation-direction: normal;
+  -moz-animation-iteration-count: infinite;
+  -moz-animation-timing-function: linear;
+  -moz-transform-origin: 50% 50%;
+  -moz-animation-duration: 18s;
+  -moz-animation-direction: normal;
+  -o-animation-iteration-count: infinite;
+  -o-animation-timing-function: linear;
+  -o-transform-origin: 50% 50%;
+  -o-animation-duration: 18s;
+  -o-animation-direction: normal;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  transform-origin: 50% 50%;
+  animation-duration: 18s;
+  animation-direction: normal;
   fill-opacity: 0;
-  -webkit-animation-name: drizzleFall, fillOpacity2;
+  -webkit-animation-name: rainFall, fillOpacity2;
   -webkit-animation-timing-function: ease-in;
-  -webkit-animation-duration: 1.5s; }
+  -moz-animation-name: rainFall, fillOpacity2;
+  -moz-animation-timing-function: ease-in;
+  -0-animation-name: rainFall, fillOpacity2;
+  -0-animation-timing-function: ease-in;
+  animation-name: rainFall, fillOpacity2;
+  animation-timing-function: ease-in; }
+
+.raindrop {
+  -webkit-animation-duration: 1.5s;
+}
 
 .raindrop:nth-child(1) {
   -webkit-animation-delay: 0s;
@@ -176,25 +200,59 @@ footer {
   -o-animation-delay: 0.2s;
   animation-delay: 0.2s; }
 
-@-webkit-keyframes drizzleFall {
+.snowflake {
+  -webkit-animation-duration: 4s;
+}
+
+.snowflake:nth-child(1) {
+  -webkit-animation-delay: 0s;
+  -moz-animation-delay: 0s;
+  -o-animation-delay: 0s;
+  animation-delay: 0s; }
+
+.snowflake:nth-child(2) {
+  -webkit-animation-delay: 2s;
+  -moz-animation-delay: 2s;
+  -o-animation-delay: 2s;
+  animation-delay: 2s; }
+
+.snowflake:nth-child(3) {
+  -webkit-animation-delay: 1.5s;
+  -moz-animation-delay: 1.5s;
+  -o-animation-delay: 1.5s;
+  animation-delay: 1.5s; }
+
+.snowflake:nth-child(4) {
+  -webkit-animation-delay: 0.5s;
+  -moz-animation-delay: 0.5s;
+  -o-animation-delay: 0.5s;
+  animation-delay: 0.5s; }
+
+.snowflake:nth-child(5) {
+  -webkit-animation-delay: 1.9s;
+  -moz-animation-delay: 1.9s;
+  -o-animation-delay: 1.9s;
+  animation-delay: 1.9s; }
+
+@-webkit-keyframes rainFall {
   100% {
     -webkit-transform: translate(110px, 176px); } }
 
-@-moz-keyframes drizzleFall {
+@-moz-keyframes rainFall {
   0% {
     -moz-transform: translate(0, 0); }
 
   100% {
     -moz-transform: translate(110px, 176px); } }
 
-@-o-keyframes drizzleFall {
+@-o-keyframes rainFall {
   0% {
     -o-transform: translate(0, 0); }
 
   100% {
     -o-transform: translate(110px, 176px); } }
 
-@keyframes drizzleFall {
+@keyframes rainFall {
   0% {
     transform: translate(0, 0); }
 

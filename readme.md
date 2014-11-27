@@ -64,6 +64,9 @@ You need to install the required packages with `pip install -r requirements/weat
 
 The weather information is fetched from the [Federal Office of Meteorology and Climatology MeteoSwiss'](http://www.sma.ch) website. The weather is updated every 30 minutes.
 
+####Temperature Data
+The [Federal Office of Meteorology and Climatology MeteoSwiss'](http://www.sma.ch) offers an API where weather information from different measurement stations is made available. Currently only the temperature information is used. More information about the topic can be found the [OpenData SMN page](http://data.netcetera.com/smn/). The temperature information from this API will be used instead of the SMA website crawling.
+
 ##Server Setup
 
 The server is based on flask so please refer to flask's [documentation](http://flask.pocoo.org/docs/quickstart/#deploying-to-a-web-server) for configuring it with your webserver. For testing you can run flask locally. The only setting that is required is the `SERVER_DATA_FILE` as the server saves the latest data to it. The path of this file can be absolute or relative (the default value is relative so you need to run `python server/server.py` from the main directory).
@@ -82,8 +85,12 @@ The configuration can be found in settings.py. The following settings are availa
 | SAVE_IMAGES  |   Boolean      |   If set true the downsampled radar images are saved to the RADAR_IMAGES folder|
 | COLLECTOR_DATA_FILE  |   String      |   Name of the file where the latest data is saved. Will be saved in the root directory.|
 | NO_SAMPLES  |   Int      |   Number of radar images to use for rain prediction.|
+| SMN_CODE  |   String      |   Code of closest [measurement station for temperature](http://data.netcetera.com/smn/swagger)|
+| GET_TEMPERATURE  |   String      |   Get temperature info from SMN stations |
 | RAIN_MESSAGES  |   List      |   Messages to indicate rain. Please add several as twitter does not allow posting duplicate messages.|
 | NO_RAIN_MESSAGES  |   List      |   Messages to indicate end of rain. Please add several as twitter does not allow posting duplicate messages.|
+| SNOW_MESSAGES  |   List      |   Messages to indicate snowfall. Please add several as twitter does not allow posting duplicate messages.|
+| NO_SNOW_MESSAGES  |   List      |   Messages to indicate end of snowfall. Please add several as twitter does not allow posting duplicate messages.|
 | CONSUMER_KEY  |   String      |   Consumer key for twitter app|
 | CONSUMER_SECRET  |   String      |   Consumer secret for twitter app|
 | ACCESS_TOKEN  |   String      |   Access token for your twitter account|
@@ -96,6 +103,18 @@ The configuration can be found in settings.py. The following settings are availa
 | SECRET | String | Secret required for sending updates to the server |
 | DUNNO_MESSAGE | String | Message to display when no data is available |
 | DISPLAY_DATE_FORMAT | Date format | Format used to display the date on the website. Default `%d.%m.%Y %H:%M` |
+| SERVER_DATA_FILE | String | Path to the server's JSON file |
+| WEATHER_UPDATE_PATH | String | URL where the weather updates will be sent to (very beta) |
+| USE_MONGODB | Boolean | Use MongoDB for weather data storage (beta) |
+| MONGODB_HOST | String | MongoDB host |
+| MONGODB_PORT | Integer | MongoDB's port |
+| SERVER_RAIN_MESSAGE | String | Message to indicate rain on the webpage |
+| SERVER_RAIN_MESSAGE | String | Message to indicate rain on the webpage |
+| SERVER_NO_RAIN_MESSAGE | String | Message to indicate no rain on the webpage |
+| SERVER_SNOW_MESSAGE | String | Message to indicate snowfall on the webpage |
+| SERVER_RAIN_SINCE_MESSAGE | String | "Rain since" message |
+| SERVER_SNOW_SINCE_MESSAGE | String | "Snow since" message |
+| SERVER_DRY_SINCE_MESSAGE | String | "Dry" message |
 
 ##Light cloud
 The light cloud is a Arduino or Espurino with a WLAN module that starts to blink when rain cells are approaching the location. The blinking's frequency increases when the cell get closer to the location.
@@ -142,7 +161,9 @@ In the code you only need to change the the WLAN settings to get things working 
 
 * Clean code & hierarchy
 * Documentation (obviously)
-* Ambient device for prediction
+* Housing for ambient device for prediction
 * 1 config file for everything
 * remove magic numbers
-* setting for mongodb
+* Clean up SVG classes & attributes
+* Server Tests
+* Move some weather analysis to own module

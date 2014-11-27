@@ -33,7 +33,8 @@ GET_TEMPERATURE = True
 #update messages used for twitter
 RAIN_MESSAGES = ["S'schifft.", "Es schifft.", "Es rägnet.", "S'rägnet.", "Räge Rägetröpfli...", "Wieder eis nass.", "Nassi Sach dusse."]
 NO_RAIN_MESSAGES = ["S'schifft nümme.", "Es schifft nümme.", "Es rägnet nümme.", "S'rägnet nümme.", "Es isch wieder troche."]
-
+SNOW_MESSAGES = ["S'schneit.", "Es schneit.", "Wieder eis Schnee.", "Es schneielet.", "S'schneielet"]
+NO_SNOW_MESSAGES = ["S'schneit nümme.", "Es schneit nümme.", "Wieder troche.", "Es isch wieder troche"]
 
 CONSUMER_KEY='consumer-key'
 CONSUMER_SECRET='consumer-secret'
@@ -49,8 +50,22 @@ TWEET_PREDICTION = False
 SERVER_DATA_FILE = './server/server_data.json'
 UPDATE_PATH = '/someupdateurl'
 
+WEATHER_UPDATE_PATH = '/someurl_weather'
+SERVER_WEATHER_URL = '%s%s'%(SERVER, WEATHER_UPDATE_PATH)
+
 SERVER_URL = 'http://127.0.0.1:5000%s'%UPDATE_PATH
 SECRET = 'secret'
 DUNNO_MESSAGE = u'Weiss nümme'
 DISPLAY_DATE_FORMAT = '%d.%m.%Y %H:%M'
+
+USE_MONGODB = False
+MONGODB_HOST = 'localhost'
+MONGODB_PORT = 27017
+
+SERVER_RAIN_MESSAGE = "S'schifft"
+SERVER_NO_RAIN_MESSAGE = "S'isch troche"
+SERVER_SNOW_MESSAGE = "S'schneit"
+SERVER_RAIN_SINCE_MESSAGE = "S'schifft sit"
+SERVER_SNOW_SINCE_MESSAGE = "S'isch troche sit"
+SERVER_DRY_SINCE_MESSAGE = "S'schneit sit"
 

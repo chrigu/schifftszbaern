@@ -18,7 +18,7 @@ def twitter_api():
                       access_token_secret=settings.ACCESS_TOKEN_SECRET)
 
 
-def tweet_status(rain):
+def tweet_status(rain, snow):
     """
     Tweets about the rain
     """
@@ -32,9 +32,15 @@ def tweet_status(rain):
     for i in range(0,5):
         try:
             if rain:
-                message = random.choice(settings.RAIN_MESSAGES)
+                if snow:
+                    message = random.choice(settings.RAIN_MESSAGES)
+                else:
+                    message = random.choice(settings.SNOW_MESSAGES)
             else:
-                message = random.choice(settings.NO_RAIN_MESSAGES)
+                if snow:
+                    message = random.choice(settings.NO_SNOW_MESSAGES)
+                else:
+                    message = random.choice(settings.NO_RAIN_MESSAGES)
 
             if message in tried:
               continue

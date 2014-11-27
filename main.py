@@ -24,7 +24,7 @@ def encode(obj):
         return {'data':obj.data, 'timestamp':datetime.strftime(obj.timestamp, settings.DATE_FORMAT)}
     return obj
 
-
+#FIXME: move parts to own module/class
 def schiffts():
     #some initialization
     old_data_queue = []
@@ -40,8 +40,10 @@ def schiffts():
     last_rain = None
     last_dry = None
     next_hit = {}
-    intensity = ""
+    intensity = 0
     temperature_data = {'status': 0}
+    old_snow = False
+    snow = False
 
     #get date
     now = datetime.now()
@@ -73,6 +75,8 @@ def schiffts():
             old_last_dry = datetime.strptime(old_data['last_dry'],settings.DATE_FORMAT)
         if old_data.has_key('next_hit'):
             old_next_hit = datetime.strptime(old_data['old_next_hit'],settings.DATE_FORMAT)
+        if old_data.has_key('last_sample_snow'):
+            old_snow = old_data['last_sample_snow']
 
         last_update = None
 
@@ -148,11 +152,9 @@ def schiffts():
                         if (((old_data.has_key('next_hit') and not old_data['next_hit']) or (not old_data.has_key('next_hit'))) and next_hit['time'] and hit_factor > 1.2):
                             send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s"%(next_hit['time'], next_hit['time_delta'], next_hit['size'], next_hit['hit_factor'], next_hit['intensity']))
 
-
                     except Exception, e:
                         print e
                         pass
-
 
             except Exception, e:
                 time_delta = None
@@ -160,15 +162,25 @@ def schiffts():
     if settings.DEBUG:
         print "raining now: %s, raining before: %s"%(rain_now, old_rain)
 
+    #get temperature info from SMN
     if settings.GET_TEMPERATURE:
         from rain import AmbientDataFetcher
         temperature_data['status'], temperature_data['temperature'] = AmbientDataFetcher.get_temperature(settings.SMN_CODE)
         if settings.DEBUG:
             print "temperature data: %s"%temperature_data
 
+    #check for snow
+    if intensity > 9:
+        #if we have the current temperature doublecheck if it is cold enough
+        if settings.GET_TEMPERATURE and temperature_data['status'] == 200 and float(temperature['data']) < 0.5:
+            snow = True
+        else:
+            snow = True
+
     #update twitter if state changed
     if rain_now != old_rain and settings.TWEET_STATUS:
-        tweet_status(rain_now)
+        snow_update = snow | old_snow
+        tweet_status(rain_now, snow_update)
 
 
     #save data, convert datetime objects to strings
@@ -184,13 +196,13 @@ def schiffts():
 
     #save data to file
     save_data = {'last_update':last_update, 'queue':queue_to_save, 'last_sample_rain':rain_now, 'last_dry':last_dry_string, \
-                'last_rain':last_rain_string, 'next_hit':next_hit, 'intensity':intensity}
+                'last_rain':last_rain_string, 'next_hit':next_hit, 'intensity':intensity, 'last_sample_snow':snow}
 
     with open(settings.COLLECTOR_DATA_FILE, 'w') as outfile:
         json.dump(save_data, outfile, default=encode)
 
     #make data
-    data_to_send = {'prediction':next_hit, 'current_data':current_data.location, 'temperature':temperature_data}
+    data_to_send = {'prediction':next_hit, 'current_data':current_data.location, 'temperature':temperature_data, 'snow':snow}
 
     #send data to server
     payload = {'secret':settings.SECRET, 'data':json.dumps(data_to_send)}

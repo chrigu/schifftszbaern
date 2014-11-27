@@ -5,7 +5,7 @@ import dateutil.parser
 from datetime import datetime
 import json
 import os
-import pymongo
+
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.sys.path.insert(0,parentdir)  #FIXME: only used for localhost
 import settings
@@ -13,9 +13,11 @@ import settings
 app = Flask(__name__)
 app.config.from_object(__name__) #FIXME: use app.config for configuration
 
-#connect to mongodb
-connection = pymongo.Connection(settings.MONGODB_HOST, settings.MONGODB_PORT)
-db = connection.schiffts
+if settings.USE_MONGODB:
+    #connect to mongodb
+    import pymongo
+    connection = pymongo.Connection(settings.MONGODB_HOST, settings.MONGODB_PORT)
+    db = connection.schiffts
 
 def read_from_file(raw=False):
     #read last saved data, if it fails set default values
@@ -60,7 +62,10 @@ def index():
     last_rain = settings.DUNNO_MESSAGE
     rain_since = settings.DUNNO_MESSAGE
     dry_since = settings.DUNNO_MESSAGE
+    rain_message = settings.SERVER_NO_RAIN_MESSAGE
+    since_message = settings.SERVER_DRY_SINCE_MESSAGE
     last_update = None
+    snow = False
     body_classes = ""
 
     dt = None
@@ -70,11 +75,20 @@ def index():
         f = open(settings.SERVER_DATA_FILE, 'r')
         weather_data = json.loads(f.read())
 
+        if weather_data.has_key('snow') and weather_data['snow']:
+            snow = weather_data['snow']
+
         if weather_data['last_update_rain']:
             if weather_data.has_key('last_rain') and weather_data['last_rain']:
                 last_update =  dateutil.parser.parse(weather_data['last_rain'])
                 dt = datetime.now() - last_update
                 rain = True
+                if snow:
+                    rain_message = settings.SERVER_SNOW_MESSAGE
+                    since_message = settings.SERVER_SNOW_SINCE_MESSAGE
+                else:
+                    rain_message = settings.SERVER_RAIN_MESSAGE
+                    since_message = settings.SERVER_RAIN_SINCE_MESSAGE
 
         else: 
             if weather_data.has_key('last_dry') and weather_data['last_dry']:
@@ -124,8 +138,11 @@ def index():
     else:
         body_classes += " no-rain"
 
-    return render_template('index.html', rain=rain, last_rain=last_rain, last_dry=last_dry, dry_since=dry_since, \
-                            rain_since=rain_since, last_update=last_update, body_classes=body_classes)
+    if snow:
+        body_classes += " snow"
+
+    return render_template('index.html', rain_message=rain_message, since_message=since_message, last_rain=last_rain, last_dry=last_dry, dry_since=dry_since, \
+                            rain_since=rain_since, last_update=last_update, rain=rain, snow=snow, body_classes=body_classes)
 
 
 @app.route(settings.RAIN_UPDATE_PATH, methods=['POST'])
@@ -178,6 +195,9 @@ def update_rain():
                 if data['temperature'].has_key('temperature'):
                     weather_data['temperature'] = data['temperature']['temperature']
 
+            if data.has_key('snow') :
+                weather_data['snow'] = data['snow']
+
 
             with open(settings.SERVER_DATA_FILE, 'w') as outfile:
                 json.dump(weather_data, outfile)
@@ -197,22 +217,25 @@ def update_weather():
     """
     Called by the weather updater. Write data to db.
     """
-    if check_password(request.form) and request.form.has_key('data'):
-        try:
-            data = json.loads(request.form['data'])
-            weather_samples = db.weather_samples
-            now = datetime.utcnow()
-        
-            sample = {'weather': data['weather'], 'temperature':data['temperature'],
-                    'time': now}
+    if settings.USE_MONGODB:
+        if check_password(request.form) and request.form.has_key('data'):
+            try:
+                data = json.loads(request.form['data'])
+                weather_samples = db.weather_samples
+                now = datetime.utcnow()
+            
+                sample = {'weather': data['weather'], 'temperature':data['temperature'],
+                        'time': now}
 
-            weather_samples.insert(sample)
-        except Exception, e:
-            print e
+                weather_samples.insert(sample)
+            except Exception, e:
+                print e
 
-        return 'merci'
+            return 'merci'
+        else:
+           abort(401)
     else:
-       abort(401)
+        abort(401)
 
 
 @app.route('/api/schiffts')
