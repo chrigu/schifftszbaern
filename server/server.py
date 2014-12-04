@@ -52,7 +52,7 @@ def check_password(form):
 
     return False
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     """
     Display the webpage
@@ -112,6 +112,16 @@ def index():
     except Exception, e:
         rain = False
 
+    #if GET parameter is present, overwrite weather variables
+    weather = request.args.get('weather', '')
+
+    if weather == 'rain':
+        rain = True
+        snow = False
+    elif weather == 'snow':
+        rain = True
+        snow = True
+
     #get latest weather data
     try:
         latest_sample = db.weather_samples.find().sort('time', pymongo.DESCENDING)[0]
@@ -130,6 +140,7 @@ def index():
     except Exception, e:
         body_classes = "no-weather-data"
 
+    #add additional classes to the body
     if body_classes == "":
         body_classes = "no-weather-data"
 
