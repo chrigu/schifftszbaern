@@ -20,7 +20,7 @@ def twitter_api():
 
 def tweet_status(rain, snow):
     """
-    Tweets about the rain
+    Tweets about rain/snow
     """
     # api = twitter_api()
 
@@ -33,9 +33,9 @@ def tweet_status(rain, snow):
         try:
             if rain:
                 if snow:
-                    message = random.choice(settings.RAIN_MESSAGES)
-                else:
                     message = random.choice(settings.SNOW_MESSAGES)
+                else:
+                    message = random.choice(settings.RAIN_MESSAGES)
             else:
                 if snow:
                     message = random.choice(settings.NO_SNOW_MESSAGES)

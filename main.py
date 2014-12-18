@@ -175,11 +175,11 @@ def schiffts():
         if settings.GET_TEMPERATURE and temperature_data['status'] == 200 and float(temperature['data']) < 0.5:
             snow = True
         else:
-            snow = True
+            snow = False
 
     #update twitter if state changed
     if rain_now != old_rain and settings.TWEET_STATUS:
-        snow_update = snow | old_snow
+        snow_update = snow or old_snow
         tweet_status(rain_now, snow_update)
 
 
