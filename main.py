@@ -7,6 +7,7 @@ import settings
 from rain import Measurement, build_timestamp, RainPredictor
 from utils import tweet_status, send_tweet
 from weatherchecks import does_it_snow, does_it_rain
+from datastorage import DataStorage
 
 import time
 import json
@@ -16,35 +17,24 @@ from time import mktime
 import copy
 
 
-def encode(obj):
-    """
-    Encodes the Measurement object so that it can be saved as JSON
-    FIXME: Move elsewhere
-    """   
-    if isinstance(obj, Measurement):
-        return {'data':obj.data, 'timestamp':datetime.strftime(obj.timestamp, settings.DATE_FORMAT)}
-    return obj
-
 #FIXME: move parts to own module/class
 def schiffts():
     #some initialization
-    old_data_queue = []
     old_data = {}
     data_queue = []
     current_data = None
-    old_latest_data = None
+  
     forecast_now_data = None
     last_update = ''
-    old_rain = False
-    old_last_rain = None
-    old_last_dry = None
+
     last_rain = None
     last_dry = None
     next_hit = {}
     intensity = 0
     temperature_data = {'status': 0}
-    old_snow = False
     snow = False
+
+    storage = DataStorage(settings.COLLECTOR_DATA_FILE)
 
     #get date
     now = datetime.now()
@@ -54,42 +44,14 @@ def schiffts():
     if settings.DEBUG:
         print "current timestamp: %s"%timestamp
 
-    #try to open the file with the old data
-    try:
-        f = open(settings.COLLECTOR_DATA_FILE, 'r')
-
-        old_data = json.loads(f.read())
-
-        #check if old data was saved, if yes create measurement objects and add them to a queue
-        if old_data.has_key('queue'):
-            for old_values in old_data['queue']:
-                measurement = Measurement.from_json((settings.X_LOCATION, settings.Y_LOCATION), 3, 105, old_values)
-                if measurement:
-                    old_data_queue.append(measurement)
-
-        #get the rest of the old data (last time of no-/rain, etc.)
-        if old_data.has_key('last_sample_rain'):
-            old_rain = old_data['last_sample_rain']
-        if old_data.has_key('last_rain'):
-            old_last_rain = datetime.strptime(old_data['last_rain'],settings.DATE_FORMAT)
-        if old_data.has_key('last_dry'):
-            old_last_dry = datetime.strptime(old_data['last_dry'],settings.DATE_FORMAT)
-        if old_data.has_key('next_hit'):
-            old_next_hit = datetime.strptime(old_data['old_next_hit'],settings.DATE_FORMAT)
-        if old_data.has_key('last_sample_snow'):
-            old_snow = old_data['last_sample_snow']
-
-        last_update = None
-
-    except Exception, e:
-        print e
+    old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue = storage.load_data()
 
     #get data from srf.ch up to now
     for minutes in range(0,settings.NO_SAMPLES+3):
         timestamp = build_timestamp(latest_radar - timedelta(0,60*5*minutes))
         #try to retrieve a measurement for the timestamp from the old data queue
         old_measurement = next((item for item in old_data_queue if item.timestamp == timestamp), None)
-        
+
         #get a new measurement from srf.ch if it wasn't found in the old data queue
         if not old_measurement:
             try:
@@ -101,6 +63,7 @@ def schiffts():
 
                 if minutes == 0:
                     current_data = measurement
+                    last_update = timestamp
 
             except Exception, e:
                 print "fail in queuefiller: %s"%e
@@ -112,6 +75,7 @@ def schiffts():
 
             if minutes == 0:
                 current_data = old_measurement
+                last_update = timestamp
 
             data_queue.append(old_measurement)
 
@@ -178,24 +142,7 @@ def schiffts():
         snow_update = snow or old_snow
         tweet_status(rain_now, snow_update)
 
-
-    #save data, convert datetime objects to strings
-    if last_dry:
-        last_dry_string = datetime.strftime(last_dry, settings.DATE_FORMAT)
-    else:
-        last_dry_string = None
-
-    if last_rain:
-        last_rain_string = datetime.strftime(last_rain, settings.DATE_FORMAT)
-    else:
-        last_rain_string = None
-
-    #save data to file
-    save_data = {'last_update':last_update, 'queue':queue_to_save, 'last_sample_rain':rain_now, 'last_dry':last_dry_string, \
-                'last_rain':last_rain_string, 'next_hit':next_hit, 'intensity':intensity, 'last_sample_snow':snow}
-
-    with open(settings.COLLECTOR_DATA_FILE, 'w') as outfile:
-        json.dump(save_data, outfile, default=encode)
+    storage.save_data(last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity, snow)
 
     #make data
     data_to_send = {'prediction':next_hit, 'current_data':current_data.location, 'temperature':temperature_data, 'snow':snow}
