@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FI
 import settings
 from rain import Measurement, build_timestamp, RainPredictor
 from utils import tweet_status, send_tweet
+from weatherchecks import does_it_snow, does_it_rain
 
 import time
 import json
@@ -121,7 +122,7 @@ def schiffts():
     queue_to_save = copy.deepcopy(data_queue)
 
     #only calculate next rain if it is currently not raining at the current location
-    if current_data.location and current_data.location.has_key('intensity'):
+    if does_it_rain(current_data):
         rain_now = True
         last_rain = current_data.timestamp
         last_dry = old_last_dry
@@ -170,12 +171,7 @@ def schiffts():
             print "temperature data: %s"%temperature_data
 
     #check for snow
-    if intensity > 9:
-        #if we have the current temperature doublecheck if it is cold enough
-        if settings.GET_TEMPERATURE and temperature_data['status'] == 200 and float(temperature['data']) < 0.5:
-            snow = True
-        else:
-            snow = False
+    snow = does_it_snow(intensity, temperature_data)
 
     #update twitter if state changed
     if rain_now != old_rain and settings.TWEET_STATUS:

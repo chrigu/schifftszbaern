@@ -2,6 +2,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
 from rain import Measurement, build_timestamp, RainPredictor
 from datetime import datetime, timedelta
+from weatherchecks import does_it_snow
 import os
 import settings
 import unittest
@@ -165,6 +166,36 @@ class IntensityTests(unittest.TestCase):
         current_data = measurement.rain_at_position(settings.X_LOCATION, settings.Y_LOCATION)
         self.assertEqual(current_data['intensity'], intensity)
 
+
+class WeatherTests(unittest.TestCase):
+
+    def test_no_snow_intentsity(self):
+        intensity = 4
+        temperature_data = {'status': 200, 'temperature': '-3'}
+
+        snow = does_it_snow(intensity, temperature_data)
+        self.assertEqual(snow, False)
+
+    def test_no_snow_status(self):
+        intensity = 10
+        temperature_data = {'status': 400, 'temperature': '-3'}
+
+        snow = does_it_snow(intensity, temperature_data)
+        self.assertEqual(snow, False)
+
+    def test_no_snow_temperature(self):
+        intensity = 10
+        temperature_data = {'status': 200, 'temperature': '2'}
+
+        snow = does_it_snow(intensity, temperature_data)
+        self.assertEqual(snow, False)
+
+    def test_snow(self):
+        intensity = 10
+        temperature_data = {'status': 200, 'temperature': '0'}
+
+        snow = does_it_snow(intensity, temperature_data)
+        self.assertEqual(snow, True)
 
 if __name__ == '__main__':
     unittest.main()
