@@ -11,7 +11,22 @@ os.sys.path.insert(0,parentdir)  #FIXME: only used for localhost
 import settings
 
 app = Flask(__name__)
-app.config.from_object(__name__) #FIXME: use app.config for configuration
+app.config.from_object(__name__)
+
+app.config.update(dict(
+    DATA_FILE=settings.SERVER_DATA_FILE,
+    DUNNO_MESSAGE=settings.DUNNO_MESSAGE,
+    DRY_MESSAGE=settings.SERVER_DRY_MESSAGE,
+    DRY_SINCE_MESSAGE=settings.SERVER_DRY_SINCE_MESSAGE,
+    RAIN_MESSAGE=settings.SERVER_RAIN_MESSAGE,
+    RAIN_SINCE_MESSAGE=settings.SERVER_RAIN_SINCE_MESSAGE,
+    SNOW_MESSAGE=settings.SERVER_SNOW_MESSAGE,
+    SNOW_SINCE_MESSAGE=settings.SERVER_SNOW_SINCE_MESSAGE,
+    RAIN_UPDATE_PATH=settings.RAIN_UPDATE_PATH,
+    WEATHER_UPDATE_PATH=settings.WEATHER_UPDATE_PATH,
+    SECRET=settings.SECRET,
+    DISPLAY_DATE_FORMAT=settings.DISPLAY_DATE_FORMAT
+))
 
 if settings.USE_MONGODB:
     #connect to mongodb
@@ -22,7 +37,7 @@ if settings.USE_MONGODB:
 def read_from_file(raw=False):
     #read last saved data, if it fails set default values
     try:
-        f = open(settings.SERVER_DATA_FILE, 'r')
+        f = open(app.config['DATA_FILE'], 'r')
         weather_data = f.read()
         if not raw:
             weather_data = json.loads(weather_data)
@@ -45,7 +60,7 @@ def check_password(form):
     try:
         secret = form['secret']
         #verify password and check if data is present
-        if(secret == settings.SECRET and not form['data'] == None):
+        if(secret == app.config['SECRET'] and not form['data'] == None):
             return True
     except Exception, e:
         pass
@@ -58,12 +73,12 @@ def index():
     Display the webpage
     """
 
-    last_dry = settings.DUNNO_MESSAGE
-    last_rain = settings.DUNNO_MESSAGE
-    rain_since = settings.DUNNO_MESSAGE
-    dry_since = settings.DUNNO_MESSAGE
-    rain_message = settings.SERVER_NO_RAIN_MESSAGE
-    since_message = settings.SERVER_DRY_SINCE_MESSAGE
+    last_dry = app.config['DUNNO_MESSAGE']
+    last_rain = app.config['DUNNO_MESSAGE']
+    rain_since = app.config['DUNNO_MESSAGE']
+    dry_since = app.config['DUNNO_MESSAGE']
+    situation_message = app.config['DRY_MESSAGE']
+    since_message = app.config['DRY_SINCE_MESSAGE']
     last_update = None
     snow = False
     body_classes = ""
@@ -72,7 +87,7 @@ def index():
 
     #read old data from file
     try:
-        f = open(settings.SERVER_DATA_FILE, 'r')
+        f = open(app.config['DATA_FILE'], 'r')
         weather_data = json.loads(f.read())
 
         if weather_data.has_key('snow') and weather_data['snow']:
@@ -84,11 +99,11 @@ def index():
                 dt = datetime.now() - last_update
                 rain = True
                 if snow:
-                    rain_message = settings.SERVER_SNOW_MESSAGE
-                    since_message = settings.SERVER_SNOW_SINCE_MESSAGE
+                    situation_message = app.config['SNOW_MESSAGE']
+                    since_message = app.config['SNOW_SINCE_MESSAGE']
                 else:
-                    rain_message = settings.SERVER_RAIN_MESSAGE
-                    since_message = settings.SERVER_RAIN_SINCE_MESSAGE
+                    situation_message = app.config['RAIN_MESSAGE']
+                    since_message = app.config['RAIN_SINCE_MESSAGE']
 
         else: 
             if weather_data.has_key('last_dry') and weather_data['last_dry']:
@@ -98,16 +113,16 @@ def index():
 
         #format datetime for display
         if weather_data['last_dry']:
-            last_dry = dateutil.parser.parse(weather_data['last_dry']).strftime(settings.DISPLAY_DATE_FORMAT)
+            last_dry = dateutil.parser.parse(weather_data['last_dry']).strftime(app.config['DISPLAY_DATE_FORMAT'])
 
         if weather_data['last_rain']:
-            last_rain = dateutil.parser.parse(weather_data['last_rain']).strftime(settings.DISPLAY_DATE_FORMAT)
+            last_rain = dateutil.parser.parse(weather_data['last_rain']).strftime(app.config['DISPLAY_DATE_FORMAT'])
 
         if weather_data.has_key('rain_since') and weather_data['rain_since']:
-            rain_since = dateutil.parser.parse(weather_data['rain_since']).strftime(settings.DISPLAY_DATE_FORMAT)          
+            rain_since = dateutil.parser.parse(weather_data['rain_since']).strftime(app.config['DISPLAY_DATE_FORMAT'])          
 
         if weather_data.has_key('dry_since') and weather_data['dry_since']:
-            dry_since = dateutil.parser.parse(weather_data['dry_since']).strftime(settings.DISPLAY_DATE_FORMAT)
+            dry_since = dateutil.parser.parse(weather_data['dry_since']).strftime(app.config['DISPLAY_DATE_FORMAT'])
 
     except Exception, e:
         rain = False
@@ -152,11 +167,11 @@ def index():
     if snow:
         body_classes += " snow"
 
-    return render_template('index.html', rain_message=rain_message, since_message=since_message, last_rain=last_rain, last_dry=last_dry, dry_since=dry_since, \
+    return render_template('index.html', situation_message=situation_message, since_message=since_message, last_rain=last_rain, last_dry=last_dry, dry_since=dry_since, \
                             rain_since=rain_since, last_update=last_update, rain=rain, snow=snow, body_classes=body_classes)
 
 
-@app.route(settings.RAIN_UPDATE_PATH, methods=['POST'])
+@app.route(app.config['RAIN_UPDATE_PATH'], methods=['POST'])
 def update_rain():
     """
     Called by the rain updater
@@ -210,7 +225,7 @@ def update_rain():
                 weather_data['snow'] = data['snow']
 
 
-            with open(settings.SERVER_DATA_FILE, 'w') as outfile:
+            with open(app.config['DATA_FILE'], 'w') as outfile:
                 json.dump(weather_data, outfile)
 
         except Exception, e:
@@ -223,7 +238,7 @@ def update_rain():
 
 
 #FIXME: use decorator
-@app.route(settings.WEATHER_UPDATE_PATH, methods=['POST'])
+@app.route(app.config['WEATHER_UPDATE_PATH'], methods=['POST'])
 def update_weather():
     """
     Called by the weather updater. Write data to db.

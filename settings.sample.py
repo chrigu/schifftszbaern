@@ -63,9 +63,9 @@ MONGODB_HOST = 'localhost'
 MONGODB_PORT = 27017
 
 SERVER_RAIN_MESSAGE = "S'schifft"
-SERVER_NO_RAIN_MESSAGE = "S'isch troche"
+SERVER_DRY_MESSAGE = "S'isch troche"
 SERVER_SNOW_MESSAGE = "S'schneit"
 SERVER_RAIN_SINCE_MESSAGE = "S'schifft sit"
-SERVER_SNOW_SINCE_MESSAGE = "S'isch troche sit"
-SERVER_DRY_SINCE_MESSAGE = "S'schneit sit"
+SERVER_DRY_SINCE_MESSAGE = "S'isch troche sit"
+SERVER_SNOW_SINCE_MESSAGE = "S'schneit sit"
 

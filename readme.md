@@ -157,6 +157,9 @@ The light cloud is a Arduino or Espurino with a WLAN module that starts to blink
 ###Code
 In the code you only need to change the the WLAN settings to get things working (Esupruino: schiffts.js (ssid / passphrase), Arduino: light_cloud_wifi.ino (WLAN_SSID / WLAN_SSID)).
 
+##Tests
+Some basic tests can be run from the main directory. You can run `python tests.py` to test the part that analyzes the radar's data. To the test the server part run `python server/server_tests.py`.
+
 ##Todo
 
 * Clean code & hierarchy
@@ -165,5 +168,6 @@ In the code you only need to change the the WLAN settings to get things working 
 * 1 config file for everything
 * remove magic numbers
 * Clean up SVG classes & attributes
-* Server Tests
+* Refactor tests
+* Move test to own directory
 * Move some weather analysis to own module
