@@ -136,9 +136,9 @@ void loop()
   strip.show();
   //JSon
   //Serial.println(json_response);
-  char jsonBuffer[128] = "";
+  char jsonBuffer[200] = "";
 
-  json_response.toCharArray(jsonBuffer, 128);
+  json_response.toCharArray(jsonBuffer, 200);
   Serial.println(jsonBuffer);
   JsonParser<16> parser;
   JsonObject root = parser.parse(jsonBuffer);
@@ -164,7 +164,7 @@ void loop()
   long   timeDelta  = root["time_delta"];
   double hit_factor  = root["hit_factor"];
 
-  if(timeDelta && hit_factor && hit_factor > 1.2) {
+  if(timeDelta && hit_factor && timeDelta > 0 && hit_factor > 1.2) {
 
     gotData = true;
     Serial.println(timeDelta);
