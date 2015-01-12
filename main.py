@@ -4,7 +4,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
 
 import settings
-from rain import Measurement, build_timestamp, RainPredictor
+from rain import Measurement, build_timestamp, RainPredictor, get_prediction_data
 from utils import tweet_status, send_tweet
 from weatherchecks import does_it_snow, does_it_rain
 from datastorage import DataStorage
@@ -29,7 +29,6 @@ def schiffts():
 
     last_rain = None
     last_dry = None
-    next_hit = {}
     intensity = 0
     temperature_data = {'status': 0}
     snow = False
@@ -97,32 +96,7 @@ def schiffts():
         last_dry = current_data.timestamp
         last_rain = old_last_rain
 
-        #make prediction. Very much beta
-        if current_data:
-            predictor = RainPredictor(data_queue, current_data.timestamp, 18)
-            try:
-                time_delta, size, impact_time, hit_factor, hit_intensity = predictor.make_forecast()
-                if settings.DEBUG:
-                    print "next rain at %s (delta %s) with size %s, hf: %s"%(impact_time, int(time_delta), size, hit_factor)
-
-                next_hit['time_delta'] = time_delta
-                next_hit['size'] = size
-                next_hit['time'] = datetime.strftime(impact_time, "%H%M")
-                next_hit['hit_factor'] = hit_factor
-                next_hit['intensity'] = hit_intensity
-
-                if settings.TWEET_PREDICTION:
-                    try:
-                        #don't send prediction if there's an old next hit value
-                        if (((old_data.has_key('next_hit') and not old_data['next_hit']) or (not old_data.has_key('next_hit'))) and next_hit['time'] and hit_factor > 1.2):
-                            send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s"%(next_hit['time'], next_hit['time_delta'], next_hit['size'], next_hit['hit_factor'], next_hit['intensity']))
-
-                    except Exception, e:
-                        print e
-                        pass
-
-            except Exception, e:
-                time_delta = None
+        next_hit = get_prediction_data(current_data, data_queue, settings.TWEET_PREDICTION)
 
     if settings.DEBUG:
         print "raining now: %s, raining before: %s"%(rain_now, old_rain)

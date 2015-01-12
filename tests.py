@@ -1,6 +1,6 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
-from rain import Measurement, build_timestamp, RainPredictor
+from rain import Measurement, build_timestamp, RainPredictor, get_prediction_data
 from datetime import datetime, timedelta
 from weatherchecks import does_it_snow
 import os
@@ -81,16 +81,25 @@ class PredictionTests(unittest.TestCase):
                 old_latest_data = current_data
                 latest_update = test_image['timestamp']
             
-
+        next_hit = get_prediction_data(current_data, new_queue, False)
         predictor = RainPredictor(new_queue, current_data.timestamp, 18)
         try:
             delta, size, time, hit_factor, intensity = predictor.make_forecast()
+
             print "test: %s - time: %s (delta %s), hit_factor: %s"%(minutes_to_hit, time, delta/60, hit_factor)
         except Exception, e:
             print e
             pass
-        print delta
+
         self.assertTrue(delta >= (minutes_to_hit-0.5)*60 and delta <= (minutes_to_hit+0.5)*60)
+        #as the time to the impact (delta) is calculated when predictor.make_forecast() is run, the result from
+        #get_prediction_data (which calls predictor.make_forecast()) and predictor.make_forecast() will differ
+        #as such we're adding some margins to the test +/- 1s
+        self.assertTrue(float(next_hit['time_delta']) >= (delta-1) and float(next_hit['time_delta']) <= (delta+1))
+        self.assertEqual("{:.2f}".format(hit_factor), next_hit['hit_factor'])
+        self.assertEqual("{:.2f}".format(size), next_hit['size'])
+        self.assertEqual(intensity['intensity'], next_hit['intensity'])
+        self.assertEqual(datetime.strftime(time, "%H%M"), next_hit['time'])
 
 
 class IntensityTests(unittest.TestCase):
