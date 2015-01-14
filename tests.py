@@ -7,6 +7,10 @@ import os
 import settings
 import unittest
 
+#Berne, Baby, Berne!
+X_LOCATION = 364
+Y_LOCATION = 366
+
 #FIXME: move to tests dir
 class PredictionTests(unittest.TestCase):
 
@@ -70,7 +74,7 @@ class PredictionTests(unittest.TestCase):
         #note: We might not be using everything here
         for test_image in images:
 
-            measurement = Measurement((settings.X_LOCATION, settings.Y_LOCATION), test_image['timestamp'], 3, 105, \
+            measurement = Measurement((X_LOCATION, Y_LOCATION), test_image['timestamp'], 3, 105, \
                                         url='file:%s/testimages/%s'%(os.path.dirname(os.path.realpath(__file__)), test_image['image']))
             measurement.analyze_image()
             new_queue.append(measurement)
@@ -102,7 +106,10 @@ class PredictionTests(unittest.TestCase):
         self.assertEqual(datetime.strftime(time, "%H%M"), next_hit['time'])
 
 
-class IntensityTests(unittest.TestCase):
+
+
+
+class ImageAnalyzisTest(unittest.TestCase):
 
     def setUp(self):
         self.start_time = datetime.now()
@@ -169,11 +176,18 @@ class IntensityTests(unittest.TestCase):
 
     def _test_image(self, test_image, intensity):
 
-        measurement = Measurement((settings.X_LOCATION, settings.Y_LOCATION), test_image['timestamp'], 3, 105, \
+        measurement = Measurement((X_LOCATION, Y_LOCATION), test_image['timestamp'], 3, 105, \
                                         url='file:%s/testimages/%s'%(os.path.dirname(os.path.realpath(__file__)), test_image['image']))
 
-        current_data = measurement.rain_at_position(settings.X_LOCATION, settings.Y_LOCATION)
+        current_data = measurement.rain_at_position(X_LOCATION, Y_LOCATION)
         self.assertEqual(current_data['intensity'], intensity)
+
+    def test_blankRadar(self):
+        measurement = Measurement((X_LOCATION, Y_LOCATION), self.start_time, 3, 105, \
+                                        url='file:%s/testimages/%s'%(os.path.dirname(os.path.realpath(__file__)), 'blank_test.png'))
+
+        measurement.analyze_image()
+        self.assertEqual(measurement.location, {}) 
 
 
 class WeatherTests(unittest.TestCase):
@@ -183,28 +197,28 @@ class WeatherTests(unittest.TestCase):
         temperature_data = {'status': 200, 'temperature': '-3'}
 
         snow = does_it_snow(intensity, temperature_data)
-        self.assertEqual(snow, False)
+        self.assertFalse(snow)
 
     def test_no_snow_status(self):
         intensity = 10
         temperature_data = {'status': 400, 'temperature': '-3'}
 
         snow = does_it_snow(intensity, temperature_data)
-        self.assertEqual(snow, False)
+        self.assertFalse(snow)
 
     def test_no_snow_temperature(self):
         intensity = 10
         temperature_data = {'status': 200, 'temperature': '2'}
 
         snow = does_it_snow(intensity, temperature_data)
-        self.assertEqual(snow, False)
+        self.assertFalse(snow)
 
     def test_snow(self):
         intensity = 10
         temperature_data = {'status': 200, 'temperature': '0'}
 
         snow = does_it_snow(intensity, temperature_data)
-        self.assertEqual(snow, True)
+        self.assertTrue(snow)
 
 if __name__ == '__main__':
     unittest.main()

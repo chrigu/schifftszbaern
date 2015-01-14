@@ -110,6 +110,7 @@ class Measurement(object):
                         {'name':'snow strong', 'rgb':[25, 255, 255], 'intensity':13},
                         {'name':'snow heavy', 'rgb':[0, 255, 255], 'intensity':14},
                         {'name':'snow very heavy', 'rgb':[0, 200, 255], 'intensity':15},
+                        {'name':'blank', 'rgb':[9, 46, 69], 'intensity':-1}
     ]
 
     @classmethod
@@ -209,6 +210,7 @@ class Measurement(object):
 
         self.data = self._analyze(image_data)
         self.location = self.rain_at_position(self.position[0], self.position[1])
+
 
     def _read_png(self, x, y, width, height):
         """
@@ -350,7 +352,7 @@ class Measurement(object):
                 region['rgb'].append(rgb[n][m]/mean_vals[n])
 
             #FIXME: use own class not dict
-            region['intensity'] = self._get_intensity(np_array([round(region['rgb'][0]/5), round(region['rgb'][1]/5), round(region['rgb'][2]/5)]))
+            region['intensity'] = self._get_intensity(np_array([round(region['rgb'][0]), round(region['rgb'][1]), round(region['rgb'][2])]))
 
             region['size'] = sizes[n]
             region['mean_value'] = mean_vals[n]
@@ -414,7 +416,10 @@ class Measurement(object):
         
         #just check that the distance is reasonable 
         if int(min_distance) < 200:
-            return self.meteo_values[distances.index(min(distances))]
+            intensity = self.meteo_values[distances.index(min(distances))]
+            #check if blank image was shown:
+            if intensity['intensity'] != -1:
+                return intensity
         else:
             return None
 
