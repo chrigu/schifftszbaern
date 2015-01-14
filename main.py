@@ -96,7 +96,7 @@ def schiffts():
         last_dry = current_data.timestamp
         last_rain = old_last_rain
 
-        next_hit = get_prediction_data(current_data, data_queue, settings.TWEET_PREDICTION)
+        next_hit = get_prediction_data(current_data, data_queue, old_data, settings.TWEET_PREDICTION)
 
     if settings.DEBUG:
         print "raining now: %s, raining before: %s"%(rain_now, old_rain)

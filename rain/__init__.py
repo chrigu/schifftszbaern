@@ -33,7 +33,7 @@ def build_timestamp(time, forecast=False):
     return rounded_time
 
 
-def get_prediction_data(current_data, data_queue, tweet_prediction):
+def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
     #make prediction. Very much beta
     if current_data:
 

@@ -85,7 +85,7 @@ class PredictionTests(unittest.TestCase):
                 old_latest_data = current_data
                 latest_update = test_image['timestamp']
             
-        next_hit = get_prediction_data(current_data, new_queue, False)
+        next_hit = get_prediction_data(current_data, new_queue, {}, False)
         predictor = RainPredictor(new_queue, current_data.timestamp, 18)
         try:
             delta, size, time, hit_factor, intensity = predictor.make_forecast()
