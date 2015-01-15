@@ -54,12 +54,12 @@ class ApiTestCase(unittest.TestCase):
         self._test_api_no_login(server.app.config['RAIN_UPDATE_PATH'])
 
 
-    def test_api_weatherupdate_no_login(self):
+    # def test_api_weatherupdate_no_login(self):
 
-        self._test_api_no_login(server.app.config['WEATHER_UPDATE_PATH'])
+    #     self._test_api_no_login(server.app.config['WEATHER_UPDATE_PATH'])
 
 
-    def _test_api_update(self, payload, data, last_update_rain, snow, last_rain_intensity, temperature):
+    def _test_api_update(self, payload, data, last_update_rain, snow, last_rain_intensity, temperature, weather_symbol_id):
 
         response = self.app.post(server.app.config['RAIN_UPDATE_PATH'], data=payload)
 
@@ -70,6 +70,7 @@ class ApiTestCase(unittest.TestCase):
         self.assertEquals(file_json['last_update_rain'], last_update_rain)
         self.assertEquals(file_json['last_rain_intensity'], data['current_data']['intensity'])
         self.assertEquals(file_json['temperature'], temperature['temperature'])
+        self.assertEquals(file_json['weather_symbol_id'], weather_symbol_id)
 
     def test_api_rainupdate(self):
         snow = False
@@ -78,12 +79,16 @@ class ApiTestCase(unittest.TestCase):
         current_data = {'intensity': 9,
                         'rgb': [255, 233, 200]
                         }
+        current_weather = {"coord_y": 204410, "coord_x": 601930, "weather_symbol_id": 5, "timestamp": "20150115131200", "altitude": 553, 
+                          "date": "Today, 15 January 2015, 13:00", "min_zoom": 2, "weekday": "Today", "current_temp": 5.8, 
+                          "city_name": "Bern / Zollikofen", "location_id": "BER", "name": "Bern / Zollikofen"
+                          }
         data_to_send = {'prediction':[], 'current_data':current_data, 'temperature':temperature, 
-                        'snow':snow}
+                        'snow':snow, 'current_weather':current_weather}
 
         payload = {'secret':server.app.config['SECRET'], 'data':json.dumps(data_to_send)}
 
-        self._test_api_update(payload, data_to_send, True, snow, current_data['intensity'], temperature)
+        self._test_api_update(payload, data_to_send, True, snow, current_data['intensity'], temperature, current_weather['weather_symbol_id'])
 
     def test_api_snowupdate(self):
         snow = True
@@ -92,12 +97,16 @@ class ApiTestCase(unittest.TestCase):
         current_data = {'intensity': 12,
                         'rgb': [255, 233, 200]
                         }
+        current_weather = {"coord_y": 204410, "coord_x": 601930, "weather_symbol_id": 5, "timestamp": "20150115131200", "altitude": 553, 
+                          "date": "Today, 15 January 2015, 13:00", "min_zoom": 2, "weekday": "Today", "current_temp": 5.8, 
+                          "city_name": "Bern / Zollikofen", "location_id": "BER", "name": "Bern / Zollikofen"
+                          }
         data_to_send = {'prediction':[], 'current_data':current_data, 'temperature':temperature, 
-                        'snow':snow}
+                        'snow':snow, 'current_weather':current_weather}
 
         payload = {'secret':server.app.config['SECRET'], 'data':json.dumps(data_to_send)}
 
-        self._test_api_update(payload, data_to_send, True, snow, current_data['intensity'], temperature)
+        self._test_api_update(payload, data_to_send, True, snow, current_data['intensity'], temperature, current_weather['weather_symbol_id'])
 
     def _test_api_schiffts(self, test_data):
 

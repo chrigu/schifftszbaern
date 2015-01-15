@@ -49,6 +49,7 @@ def read_from_file(raw=False):
                         'rain_since':None,
                         'dry_since':None,
                         'last_update_rain':False,
+                        'weather_symbol_id': -1
                         }
 
         if raw:
@@ -224,6 +225,8 @@ def update_rain():
             if data.has_key('snow') :
                 weather_data['snow'] = data['snow']
 
+            if data.has_key('current_weather') and data['current_weather'].has_key('weather_symbol_id'):
+                weather_data['weather_symbol_id'] = data['current_weather']['weather_symbol_id']
 
             with open(app.config['DATA_FILE'], 'w') as outfile:
                 json.dump(weather_data, outfile)
@@ -238,30 +241,30 @@ def update_rain():
 
 
 #FIXME: use decorator
-@app.route(app.config['WEATHER_UPDATE_PATH'], methods=['POST'])
-def update_weather():
-    """
-    Called by the weather updater. Write data to db.
-    """
-    if settings.USE_MONGODB:
-        if check_password(request.form) and request.form.has_key('data'):
-            try:
-                data = json.loads(request.form['data'])
-                weather_samples = db.weather_samples
-                now = datetime.utcnow()
+# @app.route(app.config['WEATHER_UPDATE_PATH'], methods=['POST'])
+# def update_weather():
+#     """
+#     Called by the weather updater. Write data to db.
+#     """
+#     if settings.USE_MONGODB:
+#         if check_password(request.form) and request.form.has_key('data'):
+#             try:
+#                 data = json.loads(request.form['data'])
+#                 weather_samples = db.weather_samples
+#                 now = datetime.utcnow()
             
-                sample = {'weather': data['weather'], 'temperature':data['temperature'],
-                        'time': now}
+#                 sample = {'weather': data['weather'], 'temperature':data['temperature'],
+#                         'time': now}
 
-                weather_samples.insert(sample)
-            except Exception, e:
-                print e
+#                 weather_samples.insert(sample)
+#             except Exception, e:
+#                 print e
 
-            return 'merci'
-        else:
-           abort(401)
-    else:
-        abort(401)
+#             return 'merci'
+#         else:
+#            abort(401)
+#     else:
+#         abort(401)
 
 
 @app.route('/api/schiffts')

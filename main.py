@@ -4,7 +4,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
 
 import settings
-from rain import Measurement, build_timestamp, RainPredictor, get_prediction_data
+from rain import Measurement, build_timestamp, RainPredictor, get_prediction_data, AmbientDataFetcher
 from utils import tweet_status, send_tweet
 from weatherchecks import does_it_snow, does_it_rain
 from datastorage import DataStorage
@@ -23,6 +23,7 @@ def schiffts():
     old_data = {}
     data_queue = []
     current_data = None
+    next_hit = {}
   
     forecast_now_data = None
     last_update = ''
@@ -43,7 +44,7 @@ def schiffts():
     if settings.DEBUG:
         print "current timestamp: %s"%timestamp
 
-    old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue = storage.load_data()
+    old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather = storage.load_data()
 
     #get data from srf.ch up to now
     for minutes in range(0,settings.NO_SAMPLES+3):
@@ -103,23 +104,32 @@ def schiffts():
 
     #get temperature info from SMN
     if settings.GET_TEMPERATURE:
-        from rain import AmbientDataFetcher
         temperature_data['status'], temperature_data['temperature'] = AmbientDataFetcher.get_temperature(settings.SMN_CODE)
         if settings.DEBUG:
             print "temperature data: %s"%temperature_data
 
+    #get current weather from smn (only if the latest value is older than 30min)
+    if old_location_weather != {} and old_location_weather.has_key('timestamp'):
+        if now - datetime.strptime(str(old_location_weather['timestamp']), settings.DATE_FORMAT) > timedelta(0,60*30):
+            location_weather = AmbientDataFetcher.get_weather(settings.SMN_CODE)
+        else:
+            location_weather = old_location_weather
+    else:
+        location_weather = AmbientDataFetcher.get_weather(settings.SMN_CODE)
+
     #check for snow
-    snow = does_it_snow(intensity, temperature_data)
+    snow = does_it_snow(intensity, settings.SMN_CODE)
 
     #update twitter if state changed
     if rain_now != old_rain and settings.TWEET_STATUS:
         snow_update = snow or old_snow
         tweet_status(rain_now, snow_update)
 
-    storage.save_data(last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity, snow)
+    storage.save_data(last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity, snow, location_weather)
 
     #make data
-    data_to_send = {'prediction':next_hit, 'current_data':current_data.location, 'temperature':temperature_data, 'snow':snow}
+    data_to_send = {'prediction':next_hit, 'current_data':current_data.location, 'temperature':temperature_data, 
+                    'snow':snow, 'current_weather':location_weather}
 
     #send data to server
     payload = {'secret':settings.SECRET, 'data':json.dumps(data_to_send)}
