@@ -6,6 +6,8 @@ import copy
 import settings
 import requests
 import re
+from lxml import html
+import json
 
 from numpy import linalg, asarray, mean
 from numpy import array as np_array
@@ -19,8 +21,7 @@ from datetime import datetime, timedelta
 from operator import itemgetter
 import math
 
-from lxml import html
-import json
+from utils import send_tweet
 
 
 
@@ -656,10 +657,10 @@ class AmbientDataFetcher(object):
         else:
             return request.status_code, 0
 
-    @staticmethod
     """
     Fetches the current weather from smn
     """
+    @staticmethod
     def get_weather(location_code):
         DOMAIN = "www.meteoswiss.admin.ch"
         #get page

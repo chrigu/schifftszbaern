@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FI
 
 import settings
 from rain import Measurement, build_timestamp, RainPredictor, get_prediction_data, AmbientDataFetcher
-from utils import tweet_status, send_tweet
+from utils import tweet_status
 from weatherchecks import does_it_snow, does_it_rain
 from datastorage import DataStorage
 
@@ -118,7 +118,7 @@ def schiffts():
         location_weather = AmbientDataFetcher.get_weather(settings.SMN_CODE)
 
     #check for snow
-    snow = does_it_snow(intensity, settings.SMN_CODE)
+    snow = does_it_snow(intensity, temperature_data)
 
     #update twitter if state changed
     if rain_now != old_rain and settings.TWEET_STATUS:
