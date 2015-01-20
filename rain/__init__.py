@@ -21,11 +21,6 @@ from datetime import datetime, timedelta
 from operator import itemgetter
 import math
 
-from utils import send_tweet
-
-
-
-
 def build_timestamp(time, forecast=False):
     """
     Takes the given time and subtracts 8 minutes and rounds to the next lower 5minute step.
@@ -60,6 +55,7 @@ def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
                 next_hit['intensity'] = hit_intensity['intensity']
 
                 if tweet_prediction:
+                    from schifftszbaern.utils import send_tweet
                     try:
                         #don't send prediction if there's an old next hit value
                         if (((old_data.has_key('next_hit') and not old_data['next_hit']) or (not old_data.has_key('next_hit'))) and next_hit['time'] and hit_factor > 1.2):

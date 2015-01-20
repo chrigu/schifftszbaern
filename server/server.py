@@ -10,7 +10,7 @@ parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.sys.path.insert(0,parentdir)  #FIXME: only used for localhost
 import settings
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 app.config.from_object(__name__)
 
 app.config.update(dict(
@@ -291,6 +291,9 @@ def api_forecast():
         response = Response(response=response_content, status=200, mimetype="application/json")
         return response
 
+@app.route('/test/chunntschoschiffe')
+def api_test_forecast():
+    return app.send_static_file('test_chunntschoschiffe.json')
 
 if __name__ == '__main__':
     app.debug = settings.DEBUG

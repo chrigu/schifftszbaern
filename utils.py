@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import schifftszbaern.settings as settings
-from schifftszbaern.rain import Measurement
+import settings as settings
+from rain import Measurement
 import twitter
 import random
 import settings

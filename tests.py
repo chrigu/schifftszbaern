@@ -107,8 +107,6 @@ class PredictionTests(unittest.TestCase):
 
 
 
-
-
 class ImageAnalyzisTest(unittest.TestCase):
 
     def setUp(self):

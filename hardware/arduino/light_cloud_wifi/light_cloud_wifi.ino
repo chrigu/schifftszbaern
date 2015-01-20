@@ -30,6 +30,7 @@ Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ
 
 #define WEBSITE      "www.xn--schifftszbrn-pcb.ch"
 #define WEBPAGE      "/api/chunntschoschiffe"
+#define TESTPAGE     "/test/chunntschoschiffe"
 
 //Data PIN for NeoPixel
 #define PIN 6
@@ -163,12 +164,14 @@ void loop()
   char* color = "b";
   long   timeDelta  = root["time_delta"];
   double hit_factor  = root["hit_factor"];
+  int intensity = root["intensity"];
 
   if(timeDelta && hit_factor && timeDelta > 0 && hit_factor > 1.2) {
 
     gotData = true;
     Serial.println(timeDelta);
     Serial.println(hit_factor);
+    Serial.println(intensity);
 
     if(color == "g") {
       ledValues[0] = 0;

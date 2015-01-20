@@ -169,7 +169,7 @@ class ApiTestCase(unittest.TestCase):
         with open(server.app.config['DATA_FILE'], 'w') as outfile:
             json.dump(test_data, outfile)
 
-
+        self._test_api_schiffts(test_data)
 
     def test_api_schiffts_no_rain(self):
         rain_since = self.now - timedelta(0,120)
