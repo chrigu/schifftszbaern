@@ -10,6 +10,43 @@ parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.sys.path.insert(0,parentdir)  #FIXME: only used for localhost
 import settings
 
+"""
+
+35 = overcast and dry
+3 = partly sunny, thick passing clouds
+2 = mostly sunny, some clouds
+4 = overcast
+14 = very cloudy, light rain
+5 = very cloudy
+21 = very overcast with frequent sleet
+6 = sunny intervals,  isolated showers
+15 = very cloudy, light sleet
+16 = very cloudy, light snow
+17 = very cloudy, rain
+18 = very cloudy, rain & snow
+19 = very cloudy, snow
+1 = sunny
+20 = very overcast with rain
+22 = very overcast with heavy snow
+23, 24 = thunderstomrs
+25 = thunderstomrs & heavy rain
+29 = Sunny intervals, scattered showers
+7, 10 = sunny intervals, showers & snow, sleet
+8, 11 = sunny intervals,  snow showers
+9 = sunny intervals, showers
+12 = cloudy with thunder (light & sun)
+13 = cloudy with thunder (sun, rain)
+26 = sunny with high clouds
+27 = fog sunny above
+28 = foggy
+30 = light clouds some snow, partly sunny
+31 = light clouds some snow & rain, partly sunny
+32 = light clouds some rain, partly sunny
+33 = clouds rain, partly sunny
+34 = clouds some snow, partly sunny
+
+"""
+
 app = Flask(__name__, static_url_path='')
 app.config.from_object(__name__)
 
@@ -167,6 +204,31 @@ def index():
 
     if snow:
         body_classes += " snow"
+
+    #add non-rain/snow related info to body class
+    """
+    sunny           1, 26
+    overcast        35, 4, 21, 20, 22
+    partly cloudy   2, 3, 6, 29, 7, 10, 8, 11, 9, 30, 31, 32, 33, 34
+    cloudy          14, 5, 15, 16, 17, 19, 18
+    light rain      21, 6, 15, 18, 29, 7, 10, 9, 31, 32, 33
+    heavy rain      17, 20, 26
+    light snow      14, 21, 15, 16, 18, 7, 10, 30, 31, 34
+    heavy snow      19, 22, 8, 11
+    fog             27, 28
+    thunderstorms   23, 24, 25, 12, 13
+    """
+    if weather_data.has_key('weather_symbol_id') and weather_data['weather_symbol_id'] != -1:
+        if weather_data['weather_symbol_id'] in [35, 4, 21, 20, 22]:
+            body_classes += " overcast"
+        elif weather_data['weather_symbol_id'] in [2, 3, 6, 29, 7, 10, 8, 11, 9, 30, 31, 32, 33, 34]:
+            body_classes += " partly-cloudy"
+        elif weather_data['weather_symbol_id'] in [14, 5, 15, 16, 17, 19, 18]:
+            body_classes += " cloudy"
+        elif weather_data['weather_symbol_id'] in [27, 28]:
+            body_classes += " fog"
+        elif weather_data['weather_symbol_id'] in [23, 24, 25, 12, 13]:
+            body_classes += " thunderstorms"
 
     return render_template('index.html', situation_message=situation_message, since_message=since_message, last_rain=last_rain, last_dry=last_dry, dry_since=dry_since, \
                             rain_since=rain_since, last_update=last_update, rain=rain, snow=snow, body_classes=body_classes)
