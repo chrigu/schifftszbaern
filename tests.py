@@ -100,8 +100,8 @@ class PredictionTests(unittest.TestCase):
         #get_prediction_data (which calls predictor.make_forecast()) and predictor.make_forecast() will differ
         #as such we're adding some margins to the test +/- 1s
         self.assertTrue(float(next_hit['time_delta']) >= (delta-1) and float(next_hit['time_delta']) <= (delta+1))
-        self.assertEqual("{:.2f}".format(hit_factor), next_hit['hit_factor'])
-        self.assertEqual("{:.2f}".format(size), next_hit['size'])
+        self.assertEqual(hit_factor, next_hit['hit_factor'])
+        self.assertEqual(int(size), next_hit['size'])
         self.assertEqual(intensity['intensity'], next_hit['intensity'])
         self.assertEqual(datetime.strftime(time, "%H%M"), next_hit['time'])
 

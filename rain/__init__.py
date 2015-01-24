@@ -48,10 +48,11 @@ def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
                 print "next rain at %s (delta %s) with size %s, hf: %s"%(impact_time, time_delta, size, hit_factor)
 
             if size > 0:
-                next_hit['time_delta'] = "{:.2f}".format(time_delta)
-                next_hit['size'] = "{:.2f}".format(size)
+                next_hit['hit_factor'] = hit_factor
+                #no need to be too precise
+                next_hit['time_delta'] = int(time_delta)
+                next_hit['size'] = int(size)
                 next_hit['time'] = datetime.strftime(impact_time, "%H%M")
-                next_hit['hit_factor'] = "{:.2f}".format(hit_factor)
                 next_hit['intensity'] = hit_intensity['intensity']
 
                 if tweet_prediction:

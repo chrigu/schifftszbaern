@@ -11,6 +11,7 @@ from datastorage import DataStorage
 
 import time
 import json
+#from json import encoder
 import requests
 from datetime import datetime, timedelta
 from time import mktime
@@ -132,6 +133,7 @@ def schiffts():
                     'snow':snow, 'current_weather':location_weather}
 
     #send data to server
+    #encoder.FLOAT_REPR = lambda o: format(o, '.2f')
     payload = {'secret':settings.SECRET, 'data':json.dumps(data_to_send)}
     if settings.DEBUG:
         print "data for server: %s"%payload
