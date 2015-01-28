@@ -2,10 +2,8 @@
 import schifftszbaern.settings as settings
 import png
 import urllib
-import copy
 import settings
 import requests
-import re
 from lxml import html
 import json
 
@@ -18,15 +16,15 @@ from scipy.optimize import fmin
 import numpy as np
 import uuid
 from datetime import datetime, timedelta
-from operator import itemgetter
 import math
+
 
 def build_timestamp(time, forecast=False):
     """
     Takes the given time and subtracts 8 minutes and rounds to the next lower 5minute step.
     """
 
-    #update rate is 5min, so round to the last 5minute step
+    # update rate is 5min, so round to the last 5minute step
     off_minutes = time.minute%5
     rounded_delta = timedelta(0,off_minutes*60)
 
@@ -36,7 +34,7 @@ def build_timestamp(time, forecast=False):
 
 
 def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
-    #make prediction. Very much beta
+    # make prediction. Very much beta
     if current_data:
 
         next_hit = {}
@@ -49,7 +47,7 @@ def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
 
             if size > 0:
                 next_hit['hit_factor'] = hit_factor
-                #no need to be too precise
+                # no need to be too precise
                 next_hit['time_delta'] = int(time_delta)
                 next_hit['size'] = int(size)
                 next_hit['time'] = datetime.strftime(impact_time, "%H%M")
@@ -58,7 +56,7 @@ def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
                 if tweet_prediction:
                     from schifftszbaern.utils import send_tweet
                     try:
-                        #don't send prediction if there's an old next hit value
+                        # don't send prediction if there's an old next hit value
                         if (((old_data.has_key('next_hit') and not old_data['next_hit']) or (not old_data.has_key('next_hit'))) and next_hit['time'] and hit_factor > 1.2):
                             send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s"%(next_hit['time'], next_hit['time_delta'], next_hit['size'], next_hit['hit_factor'], next_hit['intensity']))
 
@@ -135,7 +133,7 @@ class Measurement(object):
     def __init__(self, position, timestamp, raster_width, test_field_width, forecast=False, retries=3, url=None):
 
         self.position = position
-        self.raster_width = raster_width #1px is about 850m, raster = 850m*raster_width
+        self.raster_width = raster_width # 1px is about 850m, raster = 850m*raster_width
         self.test_field_width = test_field_width
         self.forecast = forecast
 
@@ -149,7 +147,7 @@ class Measurement(object):
         if not forecast:
             image_name = "PPIMERCATOR.%s.png" % (timestring)
         else:
-            #this is sometimes not available from the website, so it is currently not used here
+            # this is sometimes not available from the website, so it is currently not used here
             image_name = "FCSTMERCATOR.%s.png" % (timestring)
 
         self.image_name = image_name
@@ -157,7 +155,7 @@ class Measurement(object):
         if not forecast and not url:
             url = "http://www.srfcdn.ch/meteo/nsradar/media/web/%s" % (self.image_name) 
         
-        #use local files. Mainly for testing
+        # use local files. Mainly for testing
         if url.startswith('file:'):
             r = png.Reader(file=open(url.replace('file:', ''), 'r'))
             self.local = True
@@ -165,7 +163,7 @@ class Measurement(object):
             r = png.Reader(file=urllib.urlopen(url))
             self.local = False
 
-        #get the png's properties
+        # get the png's properties
         try:
             data = r.read()
 
@@ -215,7 +213,6 @@ class Measurement(object):
         self.data = self._analyze(image_data)
         self.location = self.rain_at_position(self.position[0], self.position[1])
 
-
     def _read_png(self, x, y, width, height):
         """
         Returns the png data starting at x, y with width & height
@@ -231,16 +228,15 @@ class Measurement(object):
 
         return pixels
 
-
     def rain_at_position(self, x, y):
         """
         Get rain intensity for position at x, y
         """
 
-        center = self._get_color_values(x, y)
+        self._get_color_values(x, y)
         pixels = []
 
-        rgb_values = [0,0,0]
+        rgb_values = [0, 0, 0]
         for y_pos in range(y-1, y+2):
             for x_pos in range(x-1, x+2):
 
@@ -253,19 +249,18 @@ class Measurement(object):
         max_value = max(pixels, key=tuple)
         return self._get_intensity(np_array(max_value)) or {}
 
-
     def _make_raster(self, pixel_array):
         """
         Downsamples the image (pixel_array) so that it is test_field_width/self.raster_width * test_field_width/self.raster_width in size. 
         """
 
-        #Divide image into a raster 
+        # Divide image into a raster
         steps = self.test_field_width/self.raster_width
 
-        #create empty pixel (rgb) array
+        # create empty pixel (rgb) array
         raster_array = [[0,0,0] for i in range(steps * steps)]
 
-        #loop through all rasters
+        # loop through all rasters
         for line in range(0,self.test_field_width):
             multiplicator = int(line/self.raster_width)
 
@@ -277,14 +272,14 @@ class Measurement(object):
                 for i in range(0,3):
                     raster_array[raster_no][i] += pixel_array[line*self.test_field_width+pixel][i] #pixel_array[line][pixel]
             
-        #average pixel values
+        # average pixel values
         for pixel in raster_array:
             for j in range(0,3):
                 pixel[j] = int(pixel[j]/(self.raster_width*self.raster_width))
 
         tuple_array = []
 
-        #convert array to tuple
+        # convert array to tuple
         for pixel in raster_array:
             tuple_array.append(tuple(pixel))
 
@@ -312,7 +307,7 @@ class Measurement(object):
         out = []
         rgb = []
 
-        #make array that only indicates regions (ie raincells), so that for a given x and y 1 = rain and 0 = no rain
+        # make array that only indicates regions (ie raincells), so that for a given x and y 1 = rain and 0 = no rain
         for i in im:
             a = []
             for j in i:
@@ -324,7 +319,7 @@ class Measurement(object):
 
         regions_data = np.array(out)
 
-        #calculate position & size of the raincells (raincells are simplified (circular shape))
+        # calculate position & size of the raincells (raincells are simplified (circular shape))
         mask = regions_data
         label_im, nb_labels = ndimage.label(regions_data)
         sizes = ndimage.sum(regions_data, label_im, range(1,nb_labels + 1))
@@ -334,7 +329,7 @@ class Measurement(object):
         for n in range(0,nb_labels):
             rgb.append([0,0,0])
 
-        #calcualte color value for regions
+        # calcualte color value for regions
         y = 0
         for line in label_im:
             x = 0
@@ -347,15 +342,15 @@ class Measurement(object):
 
         result = []
 
-        #calculate average color value for regions and map it to the raincell
-        #construct array with all data #FIXME: make obj instead of dict
+        # calculate average color value for regions and map it to the raincell
+        # construct array with all data FIXME: make obj instead of dict
         for n in range(0,nb_labels):
             region = {}
             region['rgb'] = []
             for m in range(0,3):
                 region['rgb'].append(rgb[n][m]/mean_vals[n])
 
-            #FIXME: use own class not dict
+            # FIXME: use own class not dict
             region['intensity'] = self._get_intensity(np_array([round(region['rgb'][0]), round(region['rgb'][1]), round(region['rgb'][2])]))
 
             region['size'] = sizes[n]
@@ -366,7 +361,7 @@ class Measurement(object):
             result.append(region)
 
 
-        #if one wanted a plot
+        # if one wanted a plot
         # plt.figure(figsize=(9,3))
 
         # plt.subplot(131)
@@ -403,30 +398,28 @@ class Measurement(object):
             else:
                 return [0,0,0]
 
-
     def _get_intensity(self, vector):
         """
         Finds the closest machting intensity on the rain scale.
         FIXME: Doesn't seem to work properly.....
         """
 
-        #vector needs to have some minimal length
+        # vector needs to have some minimal length
         if linalg.norm(vector) < 20:
             return None
         
-        #calculate the distance to all intensities & find the minimal distance
+        # calculate the distance to all intensities & find the minimal distance
         distances = map(lambda value: linalg.norm(vector-np_array((value['rgb'][0],value['rgb'][1],value['rgb'][2]))) ,self.meteo_values)
         min_distance = min(distances)
         
-        #just check that the distance is reasonable 
+        # just check that the distance is reasonable
         if int(min_distance) < 200:
             intensity = self.meteo_values[distances.index(min(distances))]
-            #check if blank image was shown:
+            # check if blank image was shown:
             if intensity['intensity'] != -1:
                 return intensity
         else:
             return None
-
 
 
 class RainPredictor(object):
@@ -437,7 +430,7 @@ class RainPredictor(object):
 
     def __init__(self, data, last_timestamp, center):
 
-        #sort data by time
+        # sort data by time
         self.data = sorted(data, key=lambda x: x.timestamp, reverse=True)
         self.last_timestamp = last_timestamp
         self.center = center
@@ -447,17 +440,17 @@ class RainPredictor(object):
         new_data = []
         n_1_values = []
 
-        #add the cells from the latest samples to an arrary
+        # add the cells from the latest samples to an arrary
         for latest_samples in self.data[0].data:
             latest_samples['forecast'] = self.data[0].forecast
             latest_samples['timestamp'] = self.data[0].timestamp
-            new_data.append([latest_samples]) #?why list????
+            new_data.append([latest_samples])
             n_1_values.append(latest_samples)
 
 
-        #go through the rest of the data (time descending)
+        # go through the rest of the data (time descending)
         for i in range(1, len(self.data)):
-            #check if the samples have max. a 10min difference between them.
+            # check if the samples have max. a 10min difference between them.
             try:
                 dt = self.data[i-1].timestamp - self.data[i].timestamp
 
@@ -470,16 +463,16 @@ class RainPredictor(object):
 
             close_points = {}
 
-            #loop through all raincells for a given time and try to find the closest raincell from 5 or 10 minutes ago
-            #so we can track the movement of a cell 
+            # loop through all raincells for a given time and try to find the closest raincell from 5 or 10 minutes ago
+            # so we can track the movement of a cell
             for sample in self.data[i].data:
                 position = np_array(sample['center_of_mass'])
 
-                #get distances to all raincells from 5 or 10 minutes ago
+                # get distances to all raincells from 5 or 10 minutes ago
                 distances = map(lambda new_sample: linalg.norm(position-np_array(new_sample['center_of_mass'])), n_1_values)
 
                 if distances != []:
-                    if min(distances) < 4: #just some treshold (about 9.6km (if delta is 5 minutes this is about 115km/h))
+                    if min(distances) < 4: # just some treshold (about 9.6km (if delta is 5 minutes this is about 115km/h))
                         closest_match = n_1_values[distances.index(min(distances))]
                         if not close_points.has_key(closest_match['id']):
                             close_points[closest_match['id']] = [sample]
@@ -490,17 +483,17 @@ class RainPredictor(object):
                 else:
                     closest_match = None
 
-            #find the closest match among the cells for a given time
+            # find the closest match among the cells for a given time
             for last_sample in n_1_values: #FIXME: rename to new_smample
                 position = np_array(last_sample['center_of_mass'])
                 if close_points.has_key(last_sample['id']):
                     distances = map(lambda close_sample: linalg.norm(position-np_array(close_sample['center_of_mass'])), close_points[last_sample['id']])
                     closest_match = close_points[last_sample['id']][distances.index(min(distances))]
-                    closest_match['movement'] = position - np_array(closest_match['center_of_mass']) #FIXME: add movement to n-1 value
+                    closest_match['movement'] = position - np_array(closest_match['center_of_mass']) # FIXME: add movement to n-1 value
                     closest_match['forecast'] = self.data[i].forecast
                     closest_match['timestamp'] = self.data[i].timestamp
                 else:
-                    #FIXME: change to last pos
+                    # FIXME: change to last pos
                     closest_match = {'center_of_mass':[-99, -99], 'movement':[0,0], 'size':0}
                     closest_match['forecast'] = self.data[i].forecast
                     closest_match['timestamp'] = self.data[i].timestamp
@@ -509,22 +502,21 @@ class RainPredictor(object):
                     if last_sample in history:
                         history.append(closest_match)
 
-
             n_1_values = self.data[i].data
 
         hits = []
 
-        #Loop through a raincells history (past positions) and calculate the movement for the next 50min
+        # Loop through a raincells history (past positions) and calculate the movement for the next 50min
         for history in new_data:
 
             if settings.DEBUG:
                 print "***** cell forecast *****"
 
-            #get average movement
+            # get average movement
             coms = np_array(map(lambda sample: sample['movement'], history[1:settings.NO_SAMPLES])) #FIXME: movement in wrong sample
             mean = coms.mean(axis=0)
 
-            #get last position
+            # get last position
             initial_position = np_array(history[0]['center_of_mass'])
             try:
                 radius_abs = math.sqrt(history[0]['size']/math.pi)
@@ -551,8 +543,8 @@ class RainPredictor(object):
         if hits and settings.DEBUG:
             print "****** impacts *******"
 
-        #loop through all cells that'll hit the location and get the one that'll hit the location the soonest
-        #!FIXME: make function that gets the min value for dtime and the max value for size
+        # loop through all cells that'll hit the location and get the one that'll hit the location the soonest
+        # !FIXME: make function that gets the min value for dtime and the max value for size
         for hit in hits:
             last_intensity = None
             #for sample in hit['history']:
@@ -585,7 +577,7 @@ class RainPredictor(object):
         """
         try:
             distance_to_location = lambda x: linalg.norm((self.center, self.center) - (x*mean_movement + initial_position))
-            x_start = 0# start from x = 0
+            x_start = 0 # start from x = 0
             min_x = fmin(distance_to_location,x_start, disp=0)
             min_distance_to_location = distance_to_location(min_x)
             if min_distance_to_location != 0:
@@ -598,7 +590,6 @@ class RainPredictor(object):
             hit_factor = 0
 
         return hit_factor, min_distance_to_location
-
 
     def _find_future_hit(self, initial_sample, initial_position, radius_abs, mean_movement, tolerance):
             """
@@ -622,12 +613,12 @@ class RainPredictor(object):
                     forecast_sample['size'] = initial_sample['size']
                     time = last_time + timedelta(0,60*5*min_x)
                     forecast_sample['timestamp'] = time
-                    #history.append(forecast_sample)
+                    # history.append(forecast_sample)
                     if settings.DEBUG:
                         print "%s %s - dist: %s - forecast: %s"%(forecast_sample['center_of_mass'], forecast_sample['size'], min_x, forecast_sample['forecast'])
                     
-                    #make sure the minimum value is really a hit a (somewhere from 0 to 60min in the future and within a certain
-                    #distance to the location)
+                    # make sure the minimum value is really a hit a (somewhere from 0 to 60min in the future and within a certain
+                    # distance to the location)
                     if (0 < min_x < 12) and (min_radius_distance_to_location < tolerance):
                         print forecast_sample['timestamp']
                         print (forecast_sample['timestamp']-datetime.now()).total_seconds()
@@ -660,14 +651,14 @@ class AmbientDataFetcher(object):
     @staticmethod
     def get_weather(location_code):
         DOMAIN = "www.meteoswiss.admin.ch"
-        #get page
-        page = requests.get("http://%s/home/weather/measurement-values/current-weather.html"%DOMAIN)
+        # get page
+        page = requests.get("http://%s/home/weather/measurement-values/current-weather.html" % DOMAIN)
         tree = html.fromstring(page.text)
 
-        #get url for json
+        # get url for json
         map_div = tree.xpath("//div[@id='current-weather-map']/@data-json-url")
 
-        #get json for location
+        # get json for location
         if len(map_div) > 0:
             location_weather_data = {}
             data_response = requests.get('http://%s%s'%(DOMAIN, map_div[0]))

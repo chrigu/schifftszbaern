@@ -7,14 +7,17 @@ import json
 import os
 
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.sys.path.insert(0,parentdir)  #FIXME: only used for localhost
+os.sys.path.insert(0,parentdir)  # FIXME: only used for localhost
 import settings
 
 """
 
+1 = sunny
+101 = clear sky
+2 = mostly sunny, some clouds
+102 = mostly clear sky, some clouds
 35 = overcast and dry
 3 = partly sunny, thick passing clouds
-2 = mostly sunny, some clouds
 4 = overcast
 14 = very cloudy, light rain
 5 = very cloudy
@@ -25,7 +28,6 @@ import settings
 17 = very cloudy, rain
 18 = very cloudy, rain & snow
 19 = very cloudy, snow
-1 = sunny
 20 = very overcast with rain
 22 = very overcast with heavy snow
 23, 24 = thunderstomrs
@@ -66,13 +68,13 @@ app.config.update(dict(
 ))
 
 if settings.USE_MONGODB:
-    #connect to mongodb
+    # connect to mongodb
     import pymongo
     connection = pymongo.Connection(settings.MONGODB_HOST, settings.MONGODB_PORT)
     db = connection.schiffts
 
 def read_from_file(raw=False):
-    #read last saved data, if it fails set default values
+    # read last saved data, if it fails set default values
     try:
         f = open(app.config['DATA_FILE'], 'r')
         weather_data = f.read()
@@ -97,8 +99,8 @@ def read_from_file(raw=False):
 def check_password(form):
     try:
         secret = form['secret']
-        #verify password and check if data is present
-        if(secret == app.config['SECRET'] and not form['data'] == None):
+        # verify password and check if data is present
+        if secret == app.config['SECRET'] and not form['data'] is None:
             return True
     except Exception, e:
         pass
@@ -121,9 +123,7 @@ def index():
     snow = False
     body_classes = ""
 
-    dt = None
-
-    #read old data from file
+    # read old data from file
     try:
         f = open(app.config['DATA_FILE'], 'r')
         weather_data = json.loads(f.read())
@@ -146,10 +146,10 @@ def index():
         else: 
             if weather_data.has_key('last_dry') and weather_data['last_dry']:
                 last_update =  dateutil.parser.parse(weather_data['last_dry'])
-                dt = datetime.now() - last_update
+                # dt = datetime.now() - last_update
                 rain = False 
 
-        #format datetime for display
+        # format datetime for display
         if weather_data['last_dry']:
             last_dry = dateutil.parser.parse(weather_data['last_dry']).strftime(app.config['DISPLAY_DATE_FORMAT'])
 
@@ -165,7 +165,7 @@ def index():
     except Exception, e:
         rain = False
 
-    #if GET parameter is present, overwrite weather variables
+    # if GET parameter is present, overwrite weather variables
     weather = request.args.get('weather', '')
 
     if weather == 'rain':
@@ -175,15 +175,15 @@ def index():
         rain = True
         snow = True
 
-    #get latest weather data
+    # get latest weather data
     try:
         latest_sample = db.weather_samples.find().sort('time', pymongo.DESCENDING)[0]
 
-        #only display weather if the latest value is not older than 1h
+        # only display weather if the latest value is not older than 1h
         time_diff = datetime.utcnow() - latest_sample['time']
-        time_diff_minutes = time_diff.days * 1440 + time_diff.seconds #py 2.6 :-/ use time_diff.total_seconds() in 2.7
+        time_diff_minutes = time_diff.days * 1440 + time_diff.seconds # py 2.6 :-/ use time_diff.total_seconds() in 2.7
         if time_diff_minutes < 60*60:
-            #replace strings in weather attributes and concate them
+            # replace strings in weather attributes and concate them
             for attribute in latest_sample['weather']:
                 attribute = attribute.replace(" ", "-")
                 body_classes += "%s "%attribute
@@ -193,7 +193,7 @@ def index():
     except Exception, e:
         body_classes = "no-weather-data"
 
-    #add additional classes to the body
+    # add additional classes to the body
     if body_classes == "":
         body_classes = "no-weather-data"
 
@@ -205,7 +205,7 @@ def index():
     if snow:
         body_classes += " snow"
 
-    #add non-rain/snow related info to body class
+    # add non-rain/snow related info to body class
     """
     sunny           1, 26
     overcast        35, 4, 21, 20, 22
@@ -217,17 +217,25 @@ def index():
     heavy snow      19, 22, 8, 11
     fog             27, 28
     thunderstorms   23, 24, 25, 12, 13
+
+    states > 100 are night states
     """
     if weather_data.has_key('weather_symbol_id') and weather_data['weather_symbol_id'] != -1:
-        if weather_data['weather_symbol_id'] in [35, 4, 21, 20, 22]:
+        if weather_data['weather_symbol_id'] > 100:
+            weather_symbol_id = weather_data['weather_symbol_id'] - 100
+            body_classes += " night"
+        else:
+            weather_symbol_id = weather_data['weather_symbol_id']
+
+        if weather_symbol_id in [35, 4, 21, 20, 22]:
             body_classes += " overcast"
-        elif weather_data['weather_symbol_id'] in [2, 3, 6, 29, 7, 10, 8, 11, 9, 30, 31, 32, 33, 34]:
+        elif weather_symbol_id in [2, 3, 6, 29, 7, 10, 8, 11, 9, 30, 31, 32, 33, 34]:
             body_classes += " partly-cloudy"
-        elif weather_data['weather_symbol_id'] in [14, 5, 15, 16, 17, 19, 18]:
+        elif weather_symbol_id in [14, 5, 15, 16, 17, 19, 18]:
             body_classes += " cloudy"
-        elif weather_data['weather_symbol_id'] in [27, 28]:
+        elif weather_symbol_id in [27, 28]:
             body_classes += " fog"
-        elif weather_data['weather_symbol_id'] in [23, 24, 25, 12, 13]:
+        elif weather_symbol_id in [23, 24, 25, 12, 13]:
             body_classes += " thunderstorms"
 
     return render_template('index.html', situation_message=situation_message, since_message=since_message, last_rain=last_rain, last_dry=last_dry, dry_since=dry_since, \
@@ -248,8 +256,8 @@ def update_rain():
             data = json.loads(request.form['data'])
             now = datetime.now().isoformat()
 
-            #update weather_data, if necessary
-            #update contains rain
+            # update weather_data, if necessary
+            # update contains rain
             if data.has_key('current_data'):
                 if data['current_data'].has_key('intensity'):
                     weather_data['last_rain_intensity'] = data['current_data']['intensity']
@@ -264,7 +272,7 @@ def update_rain():
                     weather_data['last_rain'] = now
                     weather_data['last_update_rain'] = True    
 
-                #update contains no rain
+                # update contains no rain
                 else:
 
                     if weather_data.has_key('last_update_rain'):
@@ -302,7 +310,7 @@ def update_rain():
        abort(401)
 
 
-#FIXME: use decorator
+# FIXME: use decorator
 # @app.route(app.config['WEATHER_UPDATE_PATH'], methods=['POST'])
 # def update_weather():
 #     """
