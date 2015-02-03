@@ -168,6 +168,8 @@ Some basic tests can be run from the main directory. You can run `python tests.p
 * 1 config file for everything
 * remove magic numbers
 * Clean up SVG classes & attributes
+* add a night class (no sun at night)
+* use scss
 * add testfile for light cloud
 * update code for Espurino
 * Refactor tests

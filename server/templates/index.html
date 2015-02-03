@@ -19,58 +19,11 @@
       <p class="current-situation">
           {{situation_message}}
       </p>
-      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-           width="18.5em" height="18.125em" viewBox="0 0 300.125 291.881" enable-background="new 0 0 296.125 291.881"
-           xml:space="preserve" class="weather">
-      <g id="cloud">
-          <path d="M282.198,134.232c0-20.439-14.99-37.375-34.576-40.418c-2.9-31.056-29.027-55.366-60.84-55.366
-              c-24.461,0-45.557,14.376-55.323,35.136c-7.336-6.972-17.248-11.259-28.167-11.259c-22.592,0-40.906,18.314-40.906,40.906
-              c0,1.605,0.103,3.186,0.282,4.742c-24.009,4.12-42.282,25.022-42.282,50.207c0,28.144,22.813,50.958,50.957,50.958
-              c16.53,0,31.215-7.877,40.525-20.076c7.247,18.203,25.016,31.076,45.803,31.076c17.297,0,32.502-8.916,41.299-22.396
-              c5.001,2.18,10.519,3.396,16.322,3.396c18.105,0,33.453-11.768,38.839-28.067C270.43,167.686,282.198,152.338,282.198,134.232z"/>
-      </g>
-      <clipPath id="rainclip">
-          <rect width="300" height="200" transform="translate(20,125)"/>
-      </clipPath>
-      {% if rain and not snow %}
-      <g class="rain" clip-path="url(#rainclip)">
-        <g class="raindrop">
-        <line fill="none" stroke="#000000" stroke-width="3" stroke-miterlimit="3" x1="5" y1="5" x2="57" y2="93" transform="translate(10, 70)"/>
-        </g>
-        <g class="raindrop">
-        <line fill="none" stroke="#000000" stroke-width="3" stroke-miterlimit="3" x1="5" y1="5" x2="57" y2="93" transform="translate(60, 70)"/>
-        </g>
-        <g class="raindrop">
-        <line fill="none" stroke="#000000" stroke-width="3" stroke-miterlimit="3" x1="5" y1="5" x2="57" y2="93" transform="translate(100, 70)"/>
-        </g>
-        <g class="raindrop">
-        <line fill="none" stroke="#000000" stroke-width="3" stroke-miterlimit="3" x1="5" y1="5" x2="57" y2="93" transform="translate(160, 70)"/>
-        </g>
-      </g>
-      {% elif snow %}
-      <g class="snow" clip-path="url(#rainclip)">
-        <g class="snowflake">
-          <circle cx="5" cy="5" r="3" transform="translate(40, 120)" fill="#ffffff"></circle>
-        </g>
-        <g class="snowflake">
-          <circle cx="5" cy="5" r="3" transform="translate(70, 120)" fill="#ffffff"></circle>
-        </g>
-        <g class="snowflake">
-          <circle cx="5" cy="5" r="3" transform="translate(100, 120)" fill="#ffffff"></circle>
-        </g>
-        <g class="snowflake">
-          <circle cx="5" cy="5" r="3" transform="translate(130, 120)" fill="#ffffff"></circle>
-        </g>
-        <g class="snowflake">
-          <circle cx="5" cy="5" r="3" transform="translate(150, 120)" fill="#ffffff"></circle>
-        </g>
-      </g>
-      {% endif %}
-      </svg>
-      <div class="city"><img src="{{ url_for('static', filename='images/city.svg') }}" alt="Berne"/></div>
-    </div>
-  </div> 
-</div>
+      {% include 'svg.html' with context %}
+<!--             </div> -->
+          </div>
+        </div> 
+      </div>
 
   <section class="info">
     <div class="arrow"></div>

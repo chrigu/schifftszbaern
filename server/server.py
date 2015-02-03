@@ -174,6 +174,9 @@ def index():
     elif weather == 'snow':
         rain = True
         snow = True
+    elif weather == 'sun':
+        rain = False
+        snow = False
 
     # get latest weather data
     try:
