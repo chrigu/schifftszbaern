@@ -46,27 +46,31 @@ html, body, #main {
 
 /* graphic */
 
+.berne-moon {
+  display: none;
+}
+
 /* sun */
-.city-sun {
+.berne-sun {
   fill: #ffff90;
 }
 
-.city-sunbeams {
+.berne-sunbeams {
   stroke: #ffff90;
   stroke-width: 2px;
 }
 
 /* sunny/no-rain stuff */
 
-.no-rain .city-mountains, .no-rain .city-houses-windows, .sunny .city-mountains, .sunny .city-houses-windows {
+.no-rain .berne-mountains, .no-rain .berne-houses-windows, .sunny .berne-mountains, .sunny .berne-houses-windows {
   fill: #d9f2ff;
 }
 
-.no-rain .city-muenster, .sunny .city-muenster {
+.no-rain .berne-muenster, .sunny .berne-muenster {
   fill: #999999;
 }
 
-.no-rain .city-houses, .sunny .city-houses {
+.no-rain .berne-houses, .sunny .berne-houses {
   fill: #808080;
 }
 
@@ -76,19 +80,19 @@ html, body, #main {
 
 /* rain & cloudy stuff */
 
-.rain .city-mountains, .cloudy .city-mountains {
+.rain .berne-mountains, .cloudy .berne-mountains {
   fill: #cccccc;
 }
 
-.rain .city-muenster, .cloudy .city-muenster {
+.rain .berne-muenster, .cloudy .berne-muenster {
   fill: #808080;
 }
 
-.rain .city-houses, .cloudy .city-houses {
+.rain .berne-houses, .cloudy .berne-houses {
   fill: #4d4d4d;
 }
 
-.rain .city-houses-windows, .cloudy .city-houses-windows {
+.rain .berne-houses-windows, .cloudy .berne-houses-windows {
   fill: #e6e6e6;
 }
 
@@ -120,23 +124,23 @@ html, body, #main {
   border-color: transparent transparent #c0c0c0 transparent;
 }
 
-.partly-cloudy .city-mountains {
+.partly-cloudy .berne-mountains {
   fill: #bbb;
 }
 
-.partly-cloudy .city-muenster {
+.partly-cloudy .berne-muenster {
   fill: #909090;
 }
 
-.partly-cloudy .city-houses {
+.partly-cloudy .berne-houses {
   fill: #5d5d5d;
 }
 
-.partly-cloudy .city-houses-windows {
+.partly-cloudy .berne-houses-windows {
   fill: #f6f6f6;
 }
 
-.partly-cloudy .city-sun {
+.partly-cloudy .berne-sun {
   transform: translate(120px, -70px);
 }
 
@@ -144,13 +148,13 @@ html, body, #main {
   display: block;
 }
 
-.cloudy .city-sun {
+.cloudy .berne-sun {
   display: none;
 }
 
 /* fog */
 
-.city-fog {
+.berne-fog {
   display: none;
 }
 
@@ -162,36 +166,36 @@ html, body, #main {
   border-color: transparent transparent #e8e8e8 transparent;
 }
 
-.fog .city-sun {
+.fog .berne-sun {
   display: none;
 }
 
-.fog .city-fog {
+.fog .berne-fog {
   display: block;
 }
 
-.fog .city-mountains {
+.fog .berne-mountains {
   fill: #d0d0d0;
 }
 
-.fog .city-houses-windows {
+.fog .berne-houses-windows {
   fill: #f0f0f0;
 }
 
-/*.fog .city-muenster {
+/*.fog .berne-muenster {
   filter: url('#fogBlurFilter');
 }*/
 
-.fog .city-fog:nth-of-type(1) {
+.fog .berne-fog:nth-of-type(1) {
   fill: #ddd;
 }
 
-.fog .city-fog:nth-of-type(2) {
+.fog .berne-fog:nth-of-type(2) {
   fill: #eee;
   fill-opacity: 70%;
 }
 
-.fog .city-fog:nth-of-type(3) {
+.fog .berne-fog:nth-of-type(3) {
   fill: #dfdfdf;
   fill-opacity: 40%;
 }
@@ -203,6 +207,68 @@ html, body, #main {
 
 .raindrop {
   stroke: #f0f0f0; 
+}
+
+/* snow */
+.snowflake {
+  fill: #ffffff;
+}
+
+/* night */
+.night .berne-moon {
+  display: block;
+}
+
+.night {
+  background: #002d56;
+}
+
+.night > .arrow {
+    border-color: transparent transparent #002d56 transparent; 
+}
+
+.night .berne-sun {
+  display: none;
+}
+
+.berne-moon-base {
+  fill: #fff1bf;
+}
+
+.berne-moon-craters {
+  fill: #f2e7b6;
+}
+
+.night .berne-mountains {
+  fill: #1d2b4d;
+}
+
+.night .berne-muenster {
+  fill: #4d4d4d;
+}
+
+.night .berne-houses {
+  fill: #333333;
+}
+
+.night .berne-houses-windows {
+  fill: #b9b315;
+}
+
+.night .main-cloud {
+  fill: #444;
+}
+
+.night .raindrop {
+  stroke: #808080;
+}
+
+.night .snowflake {
+  fill: #b0b0b0;
+}
+
+.night .current-situation {
+  color: #f0f0f0;
 }
 
 .arrow {
@@ -393,7 +459,7 @@ footer {
   -o-animation-delay: 0.1s;
   animation-delay: 0.1s; }
 
-.city-fog {
+.berne-fog {
     -webkit-animation-iteration-count: infinite;
     -webkit-animation-timing-function: linear;
     -webkit-transform-origin: 50% 50%;
@@ -416,7 +482,7 @@ footer {
     animation-timing-function: ease-in-out;
 }
 
-.city-fog:nth-of-type(1) {
+.berne-fog:nth-of-type(1) {
     -webkit-animation-duration: 18s;
     -moz-animation-duration: 18s;
     -o-animation-duration: 18s;
@@ -427,7 +493,7 @@ footer {
     -animation-name: fogMovement1;
 }
 
-.city-fog:nth-of-type(2) {
+.berne-fog:nth-of-type(2) {
     -webkit-animation-duration: 25s;
     -moz-animation-duration: 25s;
     -o-animation-duration: 25s;
@@ -438,7 +504,7 @@ footer {
     -animation-name: fogMovement2;
 }
 
-.city-fog:nth-of-type(3) {
+.berne-fog:nth-of-type(3) {
     -webkit-animation-duration: 31s;
     -moz-animation-duration: 31s;
     -o-animation-duration: 31s;
@@ -449,7 +515,7 @@ footer {
     -animation-name: fogMovement3;
 }
 
-.sunny .city-sun {
+.sunny .berne-sun {
   -webkit-animation-name: rotate;
   animation-name: rotate;
   -webkit-animation-iteration-count: infinite;
