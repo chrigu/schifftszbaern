@@ -80,19 +80,19 @@ html, body, #main {
 
 /* rain & cloudy stuff */
 
-.rain .berne-mountains, .cloudy .berne-mountains {
+.rain .berne-mountains, .cloudy .berne-mountains, .snow .berne-mountains {
   fill: #cccccc;
 }
 
-.rain .berne-muenster, .cloudy .berne-muenster {
+.rain .berne-muenster, .cloudy .berne-muenster, .snow .berne-muenster {
   fill: #808080;
 }
 
-.rain .berne-houses, .cloudy .berne-houses {
+.rain .berne-houses, .cloudy .berne-houses, .snow .berne-houses {
   fill: #4d4d4d;
 }
 
-.rain .berne-houses-windows, .cloudy .berne-houses-windows {
+.rain .berne-houses-windows, .cloudy .berne-houses-windows, .snow .berne-houses-windows {
   fill: #e6e6e6;
 }
 
@@ -103,11 +103,11 @@ html, body, #main {
   .no-rain .centered, .sunny .centered {
     margin-top: 2em; }
 
-.rain, .cloudy {
+.rain, .cloudy, .snow {
   background: #c0c0c0; }
-  .rain > .arrow, .cloudy > .arrow {
+  .rain > .arrow, .cloudy > .arrow, .snow > .arrow {
     border-color: transparent transparent #c0c0c0 transparent; }
-  .rain .centered, .cloudy .centered {
+  .rain .centered, .cloudy .centered, .snow .centered {
     margin-top: 2em; }
 
 /* clouds */
@@ -201,6 +201,14 @@ html, body, #main {
 }
 
 /* rain */
+.rain .berne-sun {
+  display: none;
+}
+
+.raindrops {
+  display: none;
+}
+
 .rain .raindrops {
   display: block;
 }
@@ -210,6 +218,18 @@ html, body, #main {
 }
 
 /* snow */
+.snow .berne-sun {
+  display: none;
+}
+
+.snowflakes {
+  display: none;
+}
+
+.snow .snowflakes {
+  display: block;
+}
+
 .snowflake {
   fill: #ffffff;
 }
