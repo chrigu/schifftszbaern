@@ -117,45 +117,33 @@ The configuration can be found in settings.py. The following settings are availa
 | SERVER_DRY_SINCE_MESSAGE | String | "Dry" message |
 
 ##Light cloud
-The light cloud is a Arduino or Espurino with a WLAN module that starts to blink when rain cells are approaching the location. The blinking's frequency increases when the cell get closer to the location.
+The light cloud is an Espruino with a WLAN module that starts to blink when rain cells are approaching the location. The blinking's frequency increases when the cell get closer to the location.
 
 ###Requirements
-* Arduino or Espurino
-* [CC3000 Wifi module](www.adafruit.com/product/1469)
+* [Espruino](http://www.espruino.com/) (Pico is recommended)
+* [ESP8622 Wifi module](http://www.espruino.com/ESP8266) (v0.25 required)
 * [NeoPixel LED](http://www.adafruit.com/category/168)
+
+Instead of the ESP8622 a [CC3000](http://www.espruino.com/CC3000) can be used as WLAN module. Keep in mind as this module is bigger and requires more connections from the Espruino. 
+
+The old unstable Arduino code can be found in hardware/old/arduino
 
 ###Wiring
 
-| Arduino Pin        | Component           | Pin  |
-|--------------------|---------------------|------|
-| GND  | CC3000 |  GND |
-| Vbat | CC3000 | Vin |
-| B3 | CC3000 | CLK |
-| B4 | CC3000 | MISO |
-| B5 | CC3000 | MOSI |
-| B6 | CC3000 | CS |
-| B7 | CC3000 | Vben |
-| B8 | CC3000 | IRQ |
+| Espruino Pin        | Component           | Pin  |
+|---------------------|---------------------|------|
+| GND  | ESP8266 |  GND |
+| 3.3 | ESP8266 | VCC |
+| 3.3 | ESP8266 | CH_PD |
+| A2 | ESP8266 | URXD |
+| A3 | ESP8266 | UTXD |
 | GND | NeoPixel | GND |
 | B15 | NeoPixel | Din |
 | Vbat | NeoPixel | Vin |
 
-| Espurino Pin        | Component           | Pin  |
-|---------------------|---------------------|------|
-| GND  | CC3000 |  GND |
-| Vbat | CC3000 | Vin |
-| B3 | CC3000 | CLK |
-| B4 | CC3000 | MISO |
-| B5 | CC3000 | MOSI |
-| B6 | CC3000 | CS |
-| B7 | CC3000 | Vben |
-| B8 | CC3000 | IRQ |
-| GND | NeoPixel | GND |
-| B15 | NeoPixel | Din |
-| Vbat | NeoPixel | Vin |
 
 ###Code
-In the code you only need to change the the WLAN settings to get things working (Esupruino: schiffts.js (ssid / passphrase), Arduino: light_cloud_wifi.ino (WLAN_SSID / WLAN_SSID)).
+In the code you only need to change the the WLAN settings to get things working (in hardware/schiffts.js (ssid / password).
 
 ##Tests
 Some basic tests can be run from the main directory. You can run `python tests.py` to test the part that analyzes the radar's data. To the test the server part run `python server/server_tests.py`.
@@ -164,14 +152,12 @@ Some basic tests can be run from the main directory. You can run `python tests.p
 
 * Clean code & hierarchy
 * Documentation (obviously)
-* Housing for ambient device for prediction
 * 1 config file for everything
 * remove magic numbers
 * Clean up SVG classes & attributes
 * add a night class (no sun at night)
 * use scss
 * add testfile for light cloud
-* update code for Espurino
 * Refactor tests
 * Move test to own directory
 * Move some weather analysis to own module
