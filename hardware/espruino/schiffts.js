@@ -1,7 +1,5 @@
 var ssid, password, url, timeout, apiString, ledInterval, wifiReady, http, wifi, testUrl;
 
-http = require('http');
-
 //network & http stuff
 ssid = "myssid";
 password = "mypassword";
@@ -93,42 +91,51 @@ function getForecast() {
     }
 }
 
+
 function onInit() {
 
-    //init serial for Wifi
-    Serial2.setup(115200, {rx: A3, tx: A2});
+    //funnily enough the code won't work without the timeout when you power the espruino
+    //from a USB power supply. Connected to the Laptop it's ok.
+    setTimeout(function() {
+        http = require('http');
 
-    //init LED bus
-    SPI2.setup({baud: 3200000, mosi: B15});
-    SPI2.send4bit([0, 0, 0], 0b0001, 0b0011);
+        digitalWrite(B9,1); // enable on Pico Shim V2
 
-    wifi = require("ESP8266WiFi_0v25").connect(Serial2, function (err) {
-        if (err) {
-            clearLed();
-        }
-        console.log("Connecting to WiFi");
-        wifi.connect(ssid, password, function (err) {
+        //init serial for Wifi
+        Serial2.setup(115200, {rx: A3, tx: A2});
+
+        //init LED bus
+        SPI2.setup({baud: 3200000, mosi: B15});
+        SPI2.send4bit([0, 0, 0], 0b0001, 0b0011);
+
+        wifi = require("ESP8266WiFi_0v25").connect(Serial2, function (err) {
             if (err) {
                 clearLed();
-                throw err;
             }
-            console.log("Connected");
+            console.log("Connecting to WiFi");
+            wifi.connect(ssid, password, function (err) {
+                if (err) {
+                    clearLed();
+                    throw err;
+                }
+                console.log("Connected");
 
-            //add a delay just to make sure an IP address was obtained
-            setTimeout(function () {
-                wifi.getIP(function (err, ip) {
-                    if (err) {
-                        clearLed();
-                        throw err;
-                    }
-                    console.log(ip);
-                    wifiReady = true;
-                    getForecast();
-                });
-            }, 2000);
+                //add a delay just to make sure an IP address was obtained
+                setTimeout(function () {
+                    wifi.getIP(function (err, ip) {
+                        if (err) {
+                            clearLed();
+                            throw err;
+                        }
+                        //console.log(ip);
+                        wifiReady = true;
+                        getForecast();
+                    });
+                }, 2000);
+            });
         });
-    });
 
-    setInterval(getForecast, timeout);
+        setInterval(getForecast, timeout);
+    }, 10000);
 
 }
