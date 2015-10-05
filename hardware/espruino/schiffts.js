@@ -110,12 +110,12 @@ function onInit() {
 
         wifi = require("ESP8266WiFi_0v25").connect(Serial2, function (err) {
             if (err) {
-                clearLed();
+                SPI2.send4bit([255, 0, 0], 0b0001, 0b0011);
             }
             console.log("Connecting to WiFi");
             wifi.connect(ssid, password, function (err) {
                 if (err) {
-                    clearLed();
+                    SPI2.send4bit([255, 0, 0], 0b0001, 0b0011);
                     throw err;
                 }
                 console.log("Connected");
