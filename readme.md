@@ -9,10 +9,24 @@
 The rain information is pulled from the [Swiss National TV's rain radar webpage (SRF)](http://www.srf.ch/meteo/radar). On this website the rain is displayed as an overlay on a map. The overlay is just a PNG where colored pixels represent rain cells and this information is used as the data source.
 
 ##Quickstart for the impatient
-1. Install the required Pyhton packages via `pip install -r requirements/base.txt`
-2. Run `cp settings.sample.py settings.py`
-3. Run `python main.py`
-5. On the terminal you should see some output, but it should state somewhere "raining now: True/False"
+
+###Server
+
+1. cd into the `server` directory
+2. Install the required Python packages via `pip install -r requirements.txt`
+3. Run `cp settings.sample.py settings.py`
+4. Run `touch server_data.json`
+4. Run `python main.py`
+
+The server should be running on `http://127.0.0.1:5000/`.
+
+###Rain analyzer
+
+1. cd into the `weather` directory
+2. Install the required Python packages via `pip install -r requirements.txt`
+3. Run `cp settings.sample.py settings.py`
+4. Run `python main.py`
+5. On the terminal you should see the some output, but at the bottom it should state "merci"
 
 ##Setup
 
@@ -25,11 +39,11 @@ Python 2.7 with the following libraries (some are quite a pita to install.....)
 * PIL
 * pypng
 * python_twitter
-* Flask (only for website)
-* Dateutil (only for website)
 * Requests
 * PyMongo (only if you use the weather crawler)
 * LXML (only if you use the weather crawler)
+* Flask (only for website)
+* Dateutil (only for website)
 
 ###Configure for your location
 
@@ -56,7 +70,7 @@ You can run `python get_token.py` (requires the oauth2 package) and it will take
 
 ####Weather Data
 
-*beta*
+*still work in progress*
 
 Currently it can be configured that the services fetches the current weather information about Berne (for the time being only this location). The information contains the current situation (rain, fog, ...) and the temperature. This feature requires a MongoDB on the server side.
 
@@ -73,7 +87,9 @@ The server is based on flask so please refer to flask's [documentation](http://f
 
 ##Configuration Options
 
-The configuration can be found in settings.py. The following settings are available:
+The configuration can be found in the settings.py files.
+
+###Weather
 
 | Setting        | Type           | Description  |
 | ------------- |-----------------| ------------|
@@ -97,14 +113,23 @@ The configuration can be found in settings.py. The following settings are availa
 | ACCESS_TOKEN_SECRET  |   String      |   Token secret for your twitter account|
 | TWEET_STATUS  |   Boolean      |   Tweet if it starts or stops raining|
 | TWEET_PREDICTION  |   Boolean      |    Tweet rain prediction|
+| RAIN_UPDATE_PATH | String | Path on the weberver where the updates will be sent |
+| WEATHER_UPDATE_PATH | String | Path where the weather updates will be sent to (very beta) |
+| SERVER | String | Server's URL |
+| SECRET | String | Secret required for sending updates to the server |
+
+###Server
+
+| Setting        | Type           | Description  |
+| ------------- |-----------------| ------------|
+| DEBUG      | Boolean | If set to true additional information for debugging is displayed |
+| SERVER | String | Server's URL |
 | SERVER_DATA_FILE | String | Path to the file where the server's data should be stored |
-| UPDATE_PATH | String | Path on the weberver where the updates will be sent |
-| SERVER_URL | String | URL where the updates will be sent to |
+| RAIN_UPDATE_PATH | String | Path on the weberver where the updates will be sent |
+| WEATHER_UPDATE_PATH | String | Path where the weather updates will be sent to (very beta) |
 | SECRET | String | Secret required for sending updates to the server |
 | DUNNO_MESSAGE | String | Message to display when no data is available |
 | DISPLAY_DATE_FORMAT | Date format | Format used to display the date on the website. Default `%d.%m.%Y %H:%M` |
-| SERVER_DATA_FILE | String | Path to the server's JSON file |
-| WEATHER_UPDATE_PATH | String | URL where the weather updates will be sent to (very beta) |
 | USE_MONGODB | Boolean | Use MongoDB for weather data storage (beta) |
 | MONGODB_HOST | String | MongoDB host |
 | MONGODB_PORT | Integer | MongoDB's port |

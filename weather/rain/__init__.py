@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import schifftszbaern.settings as settings
+import settings
 import png
 import urllib
-import settings
 import requests
 from lxml import html
 import json

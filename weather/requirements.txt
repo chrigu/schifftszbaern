@@ -1,5 +1,4 @@
 numpy
-flask
 python_twitter
 pypng
 scipy

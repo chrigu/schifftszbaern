@@ -73,6 +73,7 @@ if settings.USE_MONGODB:
     connection = pymongo.Connection(settings.MONGODB_HOST, settings.MONGODB_PORT)
     db = connection.schiffts
 
+
 def read_from_file(raw=False):
     # read last saved data, if it fails set default values
     try:
@@ -96,6 +97,7 @@ def read_from_file(raw=False):
 
     return weather_data
 
+
 def check_password(form):
     try:
         secret = form['secret']
@@ -106,6 +108,7 @@ def check_password(form):
         pass
 
     return False
+
 
 @app.route('/', methods=['GET'])
 def index():
@@ -288,14 +291,14 @@ def update_rain():
                     weather_data['last_dry'] = now
                     weather_data['last_update_rain'] = False
 
-            if data.has_key('prediction'):
+            if "prediction" in data:
                 weather_data['prediction'] = data['prediction']
 
             if data.has_key('temperature') and data['temperature'].has_key('status') and data['temperature']['status'] == 200:
                 if data['temperature'].has_key('temperature'):
                     weather_data['temperature'] = data['temperature']['temperature']
 
-            if data.has_key('snow') :
+            if "snow" in data:
                 weather_data['snow'] = data['snow']
 
             if data.has_key('current_weather') and data['current_weather'].has_key('weather_symbol_id'):
@@ -307,7 +310,7 @@ def update_rain():
         except Exception, e:
             return "fail: %s"%e
 
-        return 'merci'
+        return "merci"
         
     else:
        abort(401)
@@ -342,8 +345,8 @@ def update_rain():
 
 @app.route('/api/schiffts')
 def api_current():
-        #read last saved data, if it fails return an error
-        #FIXME: let the webserver return the file, so that flask won't serve the file
+        # read last saved data, if it fails return an error
+        # FIXME: let the webserver return the file, so that flask won't serve the file
         weather_raw = read_from_file(raw=True)
 
         response_content = weather_raw
@@ -353,8 +356,8 @@ def api_current():
 
 @app.route('/api/chunntschoschiffe')
 def api_forecast():
-        #read last saved data, if it fails return an error
-        #FIXME: let the webserver return the file, so that flask won't serve the file
+        # read last saved data, if it fails return an error
+        # FIXME: let the webserver return the file, so that flask won't serve the file
         weather_data = read_from_file()
 
         if weather_data.has_key('prediction'):
@@ -364,6 +367,7 @@ def api_forecast():
         response = Response(response=response_content, status=200, mimetype="application/json")
         return response
 
+
 @app.route('/test/chunntschoschiffe')
 def api_test_forecast():
     return app.send_static_file('test_chunntschoschiffe.json')
@@ -371,4 +375,3 @@ def api_test_forecast():
 if __name__ == '__main__':
     app.debug = settings.DEBUG
     app.run()
-    
