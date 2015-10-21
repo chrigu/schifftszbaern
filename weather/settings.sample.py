@@ -44,6 +44,13 @@ ACCESS_TOKEN_SECRET ='token-secret'
 TWEET_STATUS = False
 TWEET_PREDICTION = False
 
+# Lametric
+
+LAMETRIC_STATUS = False
+LAMETRIC_TOKEN = "mytoken"
+LAMETRIC_URL = "https://developer.lametric.com/api/V1/dev/widget/update/something"
+
+
 #Server stuff
 #############
 RAIN_UPDATE_PATH = '/someurl_rain'

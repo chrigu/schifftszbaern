@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import settings as settings
-from rain import Measurement
 import twitter
 import random
 import settings
-import time
-
+import requests
+import json
 
 def twitter_api():
     """
@@ -62,3 +61,42 @@ def send_tweet(message, api=None):
     return api.PostUpdate(message)
 
 
+def lametric_status(rain, snow):
+
+    # TODO: refactor, maybe do something pluginish
+    if rain:
+        if snow:
+            message = random.choice(settings.SNOW_MESSAGES)
+            icon = "a171"
+        else:
+            message = random.choice(settings.RAIN_MESSAGES)
+            icon = "a72"
+    else:
+        if snow:
+            message = random.choice(settings.NO_SNOW_MESSAGES)
+        else:
+            message = random.choice(settings.NO_RAIN_MESSAGES)
+
+        icon = "i50"
+
+    return send_lametric(message, icon)
+
+
+def send_lametric(message, icon):
+    headers = {
+        "Accept": "application/json",
+        "X-Access-Token": settings.LAMETRIC_TOKEN,
+        "Cache-Control": "no-cache"
+    }
+
+    data = {
+        "frames": [
+            {
+                "index": 0,
+                "text": message,
+                "icon": icon
+             }
+        ]
+    }
+
+    return requests.post(settings.LAMETRIC_URL, headers=headers, data=json.dumps(data))
