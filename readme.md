@@ -171,11 +171,11 @@ The old unstable Arduino code can be found in hardware/old/arduino
 In the code you only need to change the the WLAN settings to get things working (in hardware/schiffts.js (ssid / password).
 
 ##Tests
-Some basic tests can be run from the main directory. You can run `python tests.py` to test the part that analyzes the radar's data. To the test the server part run `python server/server_tests.py`.
+Some basic tests can be run from the weather directory. You can run `python tests.py` to test the part that analyzes the radar's data. To the test the server part run `python server/server_tests.py`.
 
 ##Todo
 
-* Clean code & hierarchy
+* Refactor code & hierarchy
 * Documentation (obviously)
 * 1 config file for everything
 * remove magic numbers

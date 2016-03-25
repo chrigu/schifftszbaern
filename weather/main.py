@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import os, sys
+import os
+import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # FIXME
 
 import settings
@@ -40,8 +41,8 @@ def schiffts():
     old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather = storage.load_data()
 
     # get data from srf.ch up to now
-    for minutes in range(0,settings.NO_SAMPLES+3):
-        timestamp = build_timestamp(latest_radar - timedelta(0,60*5*minutes))
+    for minutes in range(0, settings.NO_SAMPLES+3):
+        timestamp = build_timestamp(latest_radar - timedelta(0, 60*5*minutes))
         # try to retrieve a measurement for the timestamp from the old data queue
         old_measurement = next((item for item in old_data_queue if item.timestamp == timestamp), None)
 
@@ -59,7 +60,7 @@ def schiffts():
                     last_update = timestamp
 
             except Exception, e:
-                print "fail in queuefiller: %s"%e
+                print "fail in queuefiller: %s" % e
 
         # use old data
         else:
