@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import math
 
 
-class RainPredictor(object):
+class RainPredictor2(object):
     """
     Calculates the future movment of rain. Kind of.
     Pretty beta
@@ -24,84 +24,74 @@ class RainPredictor(object):
         self.last_timestamp = last_timestamp
         self.center = center
 
-    def make_forecast(self):
+    def _init_samples(self):
 
         new_data = []
         n_1_values = []
 
-        # add the cells from the latest samples to an arrary
+        # add the cells from the latest samples to an array
         for latest_samples in self.data[0].data:
-            latest_samples['forecast'] = self.data[0].forecast
-            latest_samples['timestamp'] = self.data[0].timestamp
-            latest_samples['data'] = self.data[0]
             new_data.append([latest_samples])
             n_1_values.append(latest_samples)
 
+        return new_data, n_1_values
 
-        # go through the rest of the data (time descending)
-        for i in range(1, len(self.data)):
-            # check if the samples have max. a 10min difference between them.
-            try:
-                dt = self.data[i-1].timestamp - self.data[i].timestamp
-
-                if(dt.seconds > 10*60):
-                    break
-
-            except Exception, e:
-                print "error: %s"%e
-                continue
-
+    def _find_closest_old_cells(self, data, newer_data):
             close_points = {}
 
             # loop through all raincells for a given time and try to find the closest raincell from 5 or 10 minutes ago
             # so we can track the movement of a cell
-            for sample in self.data[i].data:
+            for sample in data.data:
                 position = np_array(sample['center_of_mass'])
 
                 # get distances to all raincells from 5 or 10 minutes ago
-                distances = map(lambda new_sample: linalg.norm(position-np_array(new_sample['center_of_mass'])), n_1_values)
+                distances = map(lambda new_sample: linalg.norm(position-np_array(new_sample['center_of_mass'])), newer_data)
 
                 if distances != []:
-                    if min(distances) < 4: # just some treshold (about 9.6km (if delta is 5 minutes this is about 115km/h))
-                        closest_match = n_1_values[distances.index(min(distances))]
-                        if not close_points.has_key(closest_match['id']):
+
+                    min_distance = min(distances)
+                    # just some treshold (about 9.6km (if delta is 5 minutes this is about 115km/h))
+                    if min_distance < 4:
+                        closest_match = newer_data[distances.index(min_distance)]
+                        if not closest_match['id'] in close_points:
                             close_points[closest_match['id']] = [sample]
                         else:
                             close_points[closest_match['id']].append(sample)
-                    else:
-                        closest_match = None
-                else:
-                    closest_match = None
 
-            # find the closest match among the cells for a given time
-            print "n_1_values length %s" % len(n_1_values)
-            for last_sample in n_1_values: # FIXME: rename to new_smample
-                position = np_array(last_sample['center_of_mass'])
-                if close_points.has_key(last_sample['id']):
-                    distances = map(lambda close_sample: linalg.norm(position-np_array(close_sample['center_of_mass'])),
-                                    close_points[last_sample['id']])
-                    closest_match = close_points[last_sample['id']][distances.index(min(distances))]
-                    closest_match['movement'] = position - np_array(closest_match['center_of_mass']) # FIXME: add movement to n-1 value
-                    closest_match['forecast'] = self.data[i].forecast
-                    closest_match['timestamp'] = self.data[i].timestamp
-                    closest_match['data'] = self.data[i]
-                else:
-                    # FIXME: change to last pos
-                    closest_match = {'center_of_mass':[-99, -99], 'movement':[0,0], 'size':0}
-                    closest_match['forecast'] = self.data[i].forecast
-                    closest_match['timestamp'] = self.data[i].timestamp
-                    closest_match['data'] = self.data[i]
+            return close_points
 
-                for history in new_data:
-                    if last_sample in history:
-                        history.append(closest_match)
+    def _add_to_closest_match_to_history(self, data, newer_values, close_points, new_data):
+        # find the closest match among the cells for a given time
+        for last_sample in newer_values: # FIXME: rename to new_smample
+            position = np_array(last_sample['center_of_mass'])
+            if last_sample['id'] in close_points:
+                distances = map(lambda close_sample: linalg.norm(position-np_array(close_sample['center_of_mass'])),
+                                close_points[last_sample['id']])
+                closest_match = close_points[last_sample['id']][distances.index(min(distances))]
+                closest_match['movement'] = position - np_array(closest_match['center_of_mass']) # FIXME: add movement to n-1 value
+                closest_match['forecast'] = data.forecast
+                closest_match['timestamp'] = data.timestamp
+            else:
+                # FIXME: change to last pos
+                closest_match = {
+                    'center_of_mass':[-99, -99],
+                    'movement':[0, 0],
+                    'size': 0
+                }
+                closest_match['forecast'] = data.forecast
+                closest_match['timestamp'] = data.timestamp
 
-            n_1_values = self.data[i].data
+            for history in new_data:
+                if last_sample in history:
+                    history.append(closest_match)
+
+
+    def _caclulate_vector(self, data):
+        # Loop through a raincells history (past positions) and calculate the movement for the next 50min
 
         hits = []
-
-        # Loop through a raincells history (past positions) and calculate the movement for the next 50min
-        for history in new_data:
+        vectors = []
+        for history in data:
 
             if settings.DEBUG:
                 print "***** cell forecast *****"
@@ -109,6 +99,7 @@ class RainPredictor(object):
             # get average movement
             coms = np_array(map(lambda sample: sample['movement'], history[1:settings.NO_SAMPLES])) #FIXME: movement in wrong sample
             mean = coms.mean(axis=0)
+            vectors.append(mean)
 
             # get last position
             initial_position = np_array(history[0]['center_of_mass'])
@@ -122,49 +113,72 @@ class RainPredictor(object):
             if settings.DEBUG:
                 print "last_pos: %s, mean %s"%(initial_position, mean)
 
-            hit = self._find_future_hit(history[0], initial_position, radius_abs, mean, 0.5)
+            # hit = self._find_future_hit(history[0], initial_position, radius_abs, mean, 0.5)
 
-            # test
-            # print "matrix forcast"
-            # print mean
-            #
-            # history[0]['data'].calc_matrix((mean[0], mean[1]))
+            # if hit:
+            #     hits.append(hit)
 
-            if hit:
-                hits.append(hit)
+        # todo: calc vectors
+        avg_vector = reduce(lambda x, y: x + y, vectors) / len(vectors)
 
-        next_hit_intensity = None
-        time_to_next_hit = None
-        next_impact_time = None
-        next_size = -1
-        hit_factor = 0
+        return avg_vector
 
-        if hits and settings.DEBUG:
-            print "****** impacts *******"
+    def calculate_movement(self):
 
-        # loop through all cells that'll hit the location and get the one that'll hit the location the soonest
-        # !FIXME: make function that gets the min value for dtime and the max value for size
-        for hit in hits:
-            #for sample in hit['history']:
-            sample = hit['sample']
-            if sample['forecast'] and sample['size'] != 0:
-                last_intensity = sample['intensity']
-                if(time_to_next_hit is None or time_to_next_hit > hit['dtime']):
-                    if settings.DEBUG:
-                        print sample
-                    time_to_next_hit = hit['dtime']
-                    next_impact_time = hit['timestamp']
-                    next_hit_intensity = last_intensity
-                    next_size = sample['size']
-                    hit_factor = hit['hit_factor']
-                elif time_to_next_hit == hit['dtime'] and sample['intensity'] > time_to_next_hit:
-                    time_to_next_hit = hit['dtime']
-                    next_hit_intensity = last_intensity
-                    next_impact_time = hit['timestamp']
-                    next_size = sample['size']
-                    hit_factor = hit['hit_factor']
+        new_data, n_1_values = self._init_samples()
 
-        return time_to_next_hit, next_size, next_impact_time, hit_factor, next_hit_intensity
+        # go through the rest of the data (time descending)
+        for index in range(1, len(self.data)):
+            # check if the samples have max. a 10min difference between them.
+            try:
+                dt = self.data[index-1].timestamp - self.data[index].timestamp
+
+                if dt.seconds > 10 * 60:
+                    break
+
+            except Exception, e:
+                print "error: %s"%e
+                continue
+
+            close_points = self._find_closest_old_cells(self.data[index], n_1_values)
+            self._add_to_closest_match_to_history(self.data[index], n_1_values, close_points, new_data)
+
+            n_1_values = self.data[index].data
+
+        return self._caclulate_vector(new_data)
+
+        # next_hit_intensity = None
+        # time_to_next_hit = None
+        # next_impact_time = None
+        # next_size = -1
+        # hit_factor = 0
+        #
+        # if hits and settings.DEBUG:
+        #     print "****** impacts *******"
+        #
+        # # loop through all cells that'll hit the location and get the one that'll hit the location the soonest
+        # # !FIXME: make function that gets the min value for dtime and the max value for size
+        # for hit in hits:
+        #     #for sample in hit['history']:
+        #     sample = hit['sample']
+        #     if sample['forecast'] and sample['size'] != 0:
+        #         last_intensity = sample['intensity']
+        #         if(time_to_next_hit is None or time_to_next_hit > hit['dtime']):
+        #             if settings.DEBUG:
+        #                 print sample
+        #             time_to_next_hit = hit['dtime']
+        #             next_impact_time = hit['timestamp']
+        #             next_hit_intensity = last_intensity
+        #             next_size = sample['size']
+        #             hit_factor = hit['hit_factor']
+        #         elif time_to_next_hit == hit['dtime'] and sample['intensity'] > time_to_next_hit:
+        #             time_to_next_hit = hit['dtime']
+        #             next_hit_intensity = last_intensity
+        #             next_impact_time = hit['timestamp']
+        #             next_size = sample['size']
+        #             hit_factor = hit['hit_factor']
+        #
+        # return time_to_next_hit, next_size, next_impact_time, hit_factor, next_hit_intensity
 
     def _find_min_center_distance(self, initial_position, mean_movement, radius_abs):
         """
@@ -200,7 +214,7 @@ class RainPredictor(object):
                     radius_distance_to_location = lambda x: math.fabs(linalg.norm((self.center, self.center) -
                                                     (x*mean_movement + initial_position)) - (radius_abs+tolerance))
                     x_start = 0
-                    min_x = fmin(radius_distance_to_location,x_start, disp=0)[0]
+                    min_x = fmin(radius_distance_to_location, x_start, disp=0)[0]
                     min_radius_distance_to_location = radius_distance_to_location(min_x)
                     forecast_sample = {}
                     forecast_sample['forecast'] = True

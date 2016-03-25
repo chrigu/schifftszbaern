@@ -13,7 +13,7 @@ import numpy as np
 import uuid
 from datetime import datetime
 
-class Measurement(object):
+class Measurement2(object):
     """
     Contains rain information for the whole area for a given time
 
@@ -42,7 +42,7 @@ class Measurement(object):
 
     """
     # move to consts file
-    meteo_values = [{'name':'1mm/h', 'rgb': [0, 150, 255], 'intensity':0},
+    meteo_values = [{'name': '1mm/h', 'rgb': [0, 150, 255], 'intensity':0},
                         {'name': '3mm/h', 'rgb': [0, 50, 255], 'intensity':1},
                         {'name': '10mm/h', 'rgb': [0, 0, 200], 'intensity':2},
                         {'name': '30mm/h', 'rgb': [0, 0, 125], 'intensity':3},
@@ -59,9 +59,9 @@ class Measurement(object):
 
     @classmethod
     def from_json(cls, position, raster_width, test_field_width, data):
-        obj = cls(position, Measurement.timestring_to_timestamp(data['timestamp']), raster_width, test_field_width)
+        obj = cls(position, Measurement2.timestring_to_timestamp(data['timestamp']), raster_width, test_field_width)
         obj.data = data['data']
-        if data.has_key('location'):
+        if 'location' in data:
             obj.location = data['location']
         else:
             obj.location = obj.rain_at_position(obj.position[0], obj.position[1])
@@ -71,7 +71,7 @@ class Measurement(object):
     def timestring_to_timestamp(timestring):
         return datetime.strptime(str(timestring), settings.DATE_FORMAT)
 
-    def __init__(self, position, timestamp, raster_width, test_field_width, forecast=False, url=None):
+    def __init__(self, position, timestamp, raster_width, test_field_width, image_data, image_name, forecast=False, url=None):
 
         self.position = position
         self.raster_width = raster_width # 1px is about 850m, raster = 850m*raster_width
@@ -84,58 +84,23 @@ class Measurement(object):
         self.data = []
         self.timestamp = timestamp
         self.img_data = None
-
-        timestring = self.get_timestring()
-
-        if not forecast:
-            image_name = "PPIMERCATOR.%s.png" % (timestring)
-        else:
-            # this is sometimes not available from the website, so it is currently not used here
-            image_name = "FCSTMERCATOR.%s.png" % (timestring)
-
+        self.image = None
         self.image_name = image_name
 
-        if not forecast and not url:
-            url = "http://www.srfcdn.ch/meteo/nsradar/media/web/%s" % (self.image_name) 
-        
-        # use local files. Mainly for testing
-        if url.startswith('file:'):
-            r = png.Reader(file=open(url.replace('file:', ''), 'r'))
-            self.local = True
-        else:
-            file = urllib.urlopen(url)
-            r = png.Reader(file=file)
-            self.local = False
 
-        # get the png's properties
-        try:
-            data = r.read()
+        if 'palette' in image_data[3]:
+            self.palette = image_data[3]['palette']
 
-            if 'palette' in data[3]:
-                self.palette = data[3]['palette']
-
-            self.width = data[0]
-            self.height = data[1]
-            self.image_data = list(data[2])
-            self.has_alpha = data[3]['alpha']
-
-            self.analyze_image()
-
-        except png.FormatError, e:
-            print "%s - %s"%(url, e)
-            self.width = -1
-            self.height = -1            
-            self.image_data = -1
-            return None
+        self.width = image_data[0]
+        self.height = image_data[1]
+        self.image_data = list(image_data[2])
+        self.has_alpha = image_data[3]['alpha']
 
     def __str__(self):
         return self.timestamp
 
     def __unicode__(self):
         return u"%s"%self.timestamp
-
-    def get_timestring(self):
-        return datetime.strftime(self.timestamp, settings.DATE_FORMAT)
 
     def to_json(self):
 
@@ -156,6 +121,7 @@ class Measurement(object):
             return None
 
         image_data = self._make_raster(pixel_array)
+        self.image = image_data
         self.data = self._analyze(image_data)
         self.location = self.rain_at_position(self.position[0], self.position[1])
 
@@ -195,6 +161,12 @@ class Measurement(object):
         max_value = max(pixels, key=tuple)
         return self._get_intensity(np_array(max_value)) or {}
 
+    def get_data_for_label(self, label):
+        for data in self.data:
+            if data['label'] == label:
+                return data
+        return None
+
     def _make_raster(self, pixel_array):
         """
         Downsamples the image (pixel_array) so that it is =
@@ -218,7 +190,7 @@ class Measurement(object):
 
                 for i in range(0, 3):
                     raster_array[raster_no][i] += pixel_array[line*self.test_field_width+pixel][i] #pixel_array[line][pixel]
-            
+
         # average pixel values
         for pixel in raster_array:
             for j in range(0, 3):
@@ -249,7 +221,6 @@ class Measurement(object):
         Finds raincells and calculates center of mass & size for each cell.
         Returns an array with the raincells.
         """
-
         im = np.array(data)
 
         out = []
@@ -273,15 +244,17 @@ class Measurement(object):
 
         regions_data = np.array(out)
 
+
         # calculate position & size of the raincells (raincells are simplified (circular shape))
         mask = regions_data
         label_im, nb_labels = ndimage.label(regions_data)
+        self.label_img = label_im
         self.img_data = np.array(test)
-        sizes = ndimage.sum(regions_data, label_im, range(1, nb_labels + 1))
-        mean_vals = ndimage.sum(regions_data, label_im, range(1, nb_labels + 1))
-        mass = ndimage.center_of_mass(mask, labels=label_im, index=range(1, nb_labels+1))
+        sizes = ndimage.sum(regions_data, label_im, index=range(0, nb_labels+1))
+        mean_vals = ndimage.sum(regions_data, label_im, index=range(0, nb_labels+1))
+        mass = ndimage.center_of_mass(mask, labels=label_im, index=range(0, nb_labels+1))
 
-        for n in range(0, nb_labels):
+        for n in range(0, nb_labels+1):
             rgb.append([0, 0, 0])
 
         # calcualte color value for regions
@@ -291,7 +264,7 @@ class Measurement(object):
             for j in line:
                 if j != 0:
                     for n in range(0, 3):
-                        rgb[j.astype(int)-1][n] += im[y][x][n]
+                        rgb[j.astype(int)][n] += im[y][x][n]
                 x += 1
             y += 1
 
@@ -299,12 +272,17 @@ class Measurement(object):
 
         # calculate average color value for regions and map it to the raincell
         # construct array with all data FIXME: make obj instead of dict
-        for n in range(0, nb_labels):
+        for n in range(0, nb_labels+1):
+
+            if sizes[n] == 0:
+                continue
+
             region = {'rgb': []}
             for m in range(0, 3):
                 region['rgb'].append(rgb[n][m]/mean_vals[n])
 
             # FIXME: use own class not dict
+            # TODO: fix intensity!
             region['intensity'] = self._get_intensity(np_array([round(region['rgb'][0]), round(region['rgb'][1]),
                                                                 round(region['rgb'][2])]))
 
@@ -312,7 +290,8 @@ class Measurement(object):
             region['mean_value'] = mean_vals[n]
             region['center_of_mass'] = [mass[n][0], mass[n][1]]
             region['id'] = uuid.uuid4().hex
-            # region['label'] = nb_labels[n]
+            region['label'] = n
+            # print "labels: %s"%nb_labels
 
             result.append(region)
 
@@ -363,11 +342,11 @@ class Measurement(object):
         # vector needs to have some minimal length
         if linalg.norm(vector) < 20:
             return None
-        
+
         # calculate the distance to all intensities & find the minimal distance
         distances = map(lambda value: linalg.norm(vector-np_array((value['rgb'][0],value['rgb'][1],value['rgb'][2]))) ,self.meteo_values)
         min_distance = min(distances)
-        
+
         # just check that the distance is reasonable
         if int(min_distance) < 200:
             intensity = self.meteo_values[distances.index(min(distances))]
@@ -376,27 +355,3 @@ class Measurement(object):
                 return intensity
         else:
             return None
-
-    def get_matrix(self):
-
-        # for a in self.label_map:
-        #     for b in self.label_map[a]:
-        #         for c in self.label_map[a][b]:
-        #             print "c %s"%len(self.label_map[a][b][c])
-
-        pngWriter = png.Writer(width=35, height=35, greyscale=True)
-        for index in range(1, 10):
-            self.img_data = ndimage.shift(self.img_data, (1, 1))
-            pngWriter.write(open("testshift%s.png" % index, 'wb'), self.img_data)
-
-    def calc_matrix(self, vector):
-        print vector
-        # for a in self.label_map:
-        #     for b in self.label_map[a]:
-        #         for c in self.label_map[a][b]:
-        #             print "c %s"%len(self.label_map[a][b][c])
-
-        pngWriter = png.Writer(width=35, height=35, greyscale=True)
-        for index in range(1, 10):
-            self.img_data = ndimage.shift(self.img_data, vector)
-            pngWriter.write(open("testshift%s.png" % index, 'wb'), self.img_data)

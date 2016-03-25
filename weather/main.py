@@ -48,9 +48,8 @@ def schiffts():
 
         # get a new measurement from srf.ch if it wasn't found in the old data queue
         if not old_measurement:
-            try:
-                measurement = Measurement((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 3, 105)
-                measurement.analyze_image()
+            # try:
+                measurement = Measurement((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, 105)
                 data_queue.append(measurement)
                 if settings.DEBUG:
                     print "add sample with timestamp %s"%timestamp
@@ -59,20 +58,19 @@ def schiffts():
                     current_data = measurement
                     last_update = timestamp
 
-            except Exception, e:
-                print "fail in queuefiller: %s" % e
+            # except Exception, e:
+            #     print "fail in queuefiller: %s" % e
 
         # use old data
         else:
             if settings.DEBUG:
-                print "%s already in queue"%timestamp
+                print "%s already in queue" % timestamp
 
             if minutes == 0:
                 current_data = old_measurement
                 last_update = timestamp
 
             data_queue.append(old_measurement)
-
 
         if len(data_queue) == settings.NO_SAMPLES:
             break
@@ -94,16 +92,16 @@ def schiffts():
         next_hit = get_prediction_data(current_data, data_queue, old_data, settings.TWEET_PREDICTION)
 
     if settings.DEBUG:
-        print "raining now: %s, raining before: %s"%(rain_now, old_rain)
+        print "raining now: %s, raining before: %s" % (rain_now, old_rain)
 
     # get temperature info from SMN
     if settings.GET_TEMPERATURE:
         temperature_data['status'], temperature_data['temperature'] = AmbientDataFetcher.get_temperature(settings.SMN_CODE)
         if settings.DEBUG:
-            print "temperature data: %s"%temperature_data
+            print "temperature data: %s" % temperature_data
 
     # get current weather from smn (only if the latest value is older than 30min)
-    if old_location_weather != {} and old_location_weather.has_key('timestamp'):
+    if old_location_weather != {} and 'timestamp' in old_location_weather:
         if now - datetime.strptime(str(old_location_weather['timestamp']), settings.DATE_FORMAT) > timedelta(0,60*30):
             location_weather = AmbientDataFetcher.get_weather(settings.SMN_CODE)
         else:
@@ -123,12 +121,12 @@ def schiffts():
                       location_weather)
 
     # make data
-    data_to_send = {'prediction':next_hit, 'current_data':current_data.location, 'temperature':temperature_data,
-                    'snow':snow, 'current_weather':location_weather}
+    data_to_send = {'prediction': next_hit, 'current_data': current_data.location, 'temperature': temperature_data,
+                    'snow': snow, 'current_weather': location_weather}
 
     # send data to server
     # encoder.FLOAT_REPR = lambda o: format(o, '.2f')
-    payload = {'secret':settings.SECRET, 'data':json.dumps(data_to_send)}
+    payload = {'secret': settings.SECRET, 'data': json.dumps(data_to_send)}
     if settings.DEBUG:
         print "data for server: %s"%payload
     try:
@@ -138,4 +136,6 @@ def schiffts():
         print e
 
 if __name__ == '__main__':
-    schiffts()
+    # schiffts()
+    from rain.Analyzer import Analyzer
+    analyzer = Analyzer(105, settings.NO_SAMPLES)

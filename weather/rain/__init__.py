@@ -2,7 +2,9 @@
 import settings
 
 from datetime import datetime, timedelta
-
+import png
+import urllib
+from utils import extrapolate_rain
 from Measurement import Measurement
 from RainPredictor import RainPredictor
 from AmbientDataFetcher import AmbientDataFetcher
@@ -62,5 +64,56 @@ def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
             return {}
 
 
+def get_timestring(timestamp):
+    return datetime.strftime(timestamp, settings.DATE_FORMAT)
 
 
+def build_timestamp(time, forecast=False):
+    """
+    Takes the given time and subtracts 8 minutes and rounds to the next lower 5minute step.
+    """
+
+    # update rate is 5min, so round to the last 5minute step
+    off_minutes = time.minute % 5
+    rounded_delta = timedelta(0, off_minutes * 60)
+
+    rounded_time = (time - rounded_delta).replace(second=0, microsecond=0)
+
+    return rounded_time
+
+
+def get_radar_image(timestamp=None, forecast=False, url=None):
+
+    if url and url.startswith('file:'):
+        r = png.Reader(file=open(url.replace('file:', ''), 'r'))
+        local = True
+        image_name = url.replace('file:', '')
+
+    else:
+        timestring = get_timestring(timestamp)
+
+        if not forecast and not url:
+            image_name = "PPIMERCATOR.%s.png" % (timestring)
+        else:
+            # this is sometimes not available from the website, so it is currently not used here
+            image_name = "FCSTMERCATOR.%s.png" % (timestring)
+
+
+        if not forecast and not url:
+            url = "http://www.srfcdn.ch/meteo/nsradar/media/web/%s" % (image_name)
+
+        # use local files. Mainly for testing
+
+        file = urllib.urlopen(url)
+        r = png.Reader(file=file)
+        local = False
+
+
+    # get the png's properties
+    try:
+        data = r.read()
+        return data, image_name
+
+    except png.FormatError, e:
+        print "get_radar_image: %s" % e
+        return None, None

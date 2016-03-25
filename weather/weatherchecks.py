@@ -24,3 +24,4 @@ def does_it_snow(intensity, temperature_data):
             return False
     else:
         return False
+

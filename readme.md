@@ -176,6 +176,7 @@ Some basic tests can be run from the weather directory. You can run `python test
 ##Todo
 
 * Refactor code & hierarchy
+* use python3
 * Documentation (obviously)
 * 1 config file for everything
 * remove magic numbers
