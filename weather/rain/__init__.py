@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import png
 import urllib
 from utils import extrapolate_rain
+from numpy import array as np_array
 from Measurement import Measurement
 from RainPredictor import RainPredictor
 from AmbientDataFetcher import AmbientDataFetcher

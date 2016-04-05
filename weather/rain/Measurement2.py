@@ -4,7 +4,6 @@ import png
 import urllib
 import json
 
-from numpy import linalg
 from numpy import array as np_array
 
 from scipy import ndimage
@@ -12,6 +11,7 @@ from scipy import ndimage
 import numpy as np
 import uuid
 from datetime import datetime
+from utils import get_intensity
 
 class Measurement2(object):
     """
@@ -41,21 +41,6 @@ class Measurement2(object):
 
 
     """
-    # move to consts file
-    meteo_values = [{'name': '1mm/h', 'rgb': [0, 150, 255], 'intensity':0},
-                        {'name': '3mm/h', 'rgb': [0, 50, 255], 'intensity':1},
-                        {'name': '10mm/h', 'rgb': [0, 0, 200], 'intensity':2},
-                        {'name': '30mm/h', 'rgb': [0, 0, 125], 'intensity':3},
-                        {'name': '100mm/h', 'rgb': [255, 255, 0], 'intensity':4},
-                        {'name': '>100mm/h', 'rgb': [255, 0, 0], 'intensity':5},
-                        {'name': 'flakes', 'rgb': [200, 255, 255], 'intensity':10},
-                        {'name': 'snow weak', 'rgb': [150, 255, 255], 'intensity':11},
-                        {'name': 'snow moderate', 'rgb': [100, 255, 255], 'intensity':12},
-                        {'name': 'snow strong', 'rgb': [25, 255, 255], 'intensity':13},
-                        {'name': 'snow heavy', 'rgb': [0, 255, 255], 'intensity':14},
-                        {'name': 'snow very heavy', 'rgb': [0, 200, 255], 'intensity':15},
-                        {'name': 'blank', 'rgb': [9, 46, 69], 'intensity':-1}
-    ]
 
     @classmethod
     def from_json(cls, position, raster_width, test_field_width, data):
@@ -87,7 +72,6 @@ class Measurement2(object):
         self.image = None
         self.image_name = image_name
 
-
         if 'palette' in image_data[3]:
             self.palette = image_data[3]['palette']
 
@@ -100,7 +84,7 @@ class Measurement2(object):
         return self.timestamp
 
     def __unicode__(self):
-        return u"%s"%self.timestamp
+        return u"%s" % self.timestamp
 
     def to_json(self):
 
@@ -159,7 +143,7 @@ class Measurement2(object):
                     rgb_values[i] += pixel[i]
 
         max_value = max(pixels, key=tuple)
-        return self._get_intensity(np_array(max_value)) or {}
+        return get_intensity(np_array(max_value))
 
     def get_data_for_label(self, label):
         for data in self.data:
@@ -172,7 +156,6 @@ class Measurement2(object):
         Downsamples the image (pixel_array) so that it is =
          test_field_width/self.raster_width * test_field_width/self.raster_width in size.
         """
-
         # Divide image into a raster
         steps = self.test_field_width/self.raster_width
 
@@ -216,6 +199,22 @@ class Measurement2(object):
 
         return downsampled_image
 
+    def _make_mask(self, data):
+        # make array that only indicates regions (ie raincells), so that for a given x and y 1 = rain and 0 = no rain
+        out = []
+
+        for i in data:
+            a = []
+            for j in i:
+                if j.any():
+                    a.append(1)
+                else:
+                    a.append(0)
+
+            out.append(a)
+
+        return np.array(out)
+
     def _analyze(self, data):
         """
         Finds raincells and calculates center of mass & size for each cell.
@@ -223,33 +222,14 @@ class Measurement2(object):
         """
         im = np.array(data)
 
-        out = []
         rgb = []
-        test = []
-
-        # make array that only indicates regions (ie raincells), so that for a given x and y 1 = rain and 0 = no rain
-        for i in im:
-            a = []
-            btest = []
-            for j in i:
-                if j.any():
-                    btest.append(255)
-                    a.append(1)
-                else:
-                    a.append(0)
-                    btest.append(0)
-
-            out.append(a)
-            test.append(btest)
-
-        regions_data = np.array(out)
-
+        regions_data = self._make_mask(im)
 
         # calculate position & size of the raincells (raincells are simplified (circular shape))
         mask = regions_data
         label_im, nb_labels = ndimage.label(regions_data)
         self.label_img = label_im
-        self.img_data = np.array(test)
+        # self.img_data = np.array(test)
         sizes = ndimage.sum(regions_data, label_im, index=range(0, nb_labels+1))
         mean_vals = ndimage.sum(regions_data, label_im, index=range(0, nb_labels+1))
         mass = ndimage.center_of_mass(mask, labels=label_im, index=range(0, nb_labels+1))
@@ -283,7 +263,7 @@ class Measurement2(object):
 
             # FIXME: use own class not dict
             # TODO: fix intensity!
-            region['intensity'] = self._get_intensity(np_array([round(region['rgb'][0]), round(region['rgb'][1]),
+            region['intensity'] = get_intensity(np_array([round(region['rgb'][0]), round(region['rgb'][1]),
                                                                 round(region['rgb'][2])]))
 
             region['size'] = sizes[n]
@@ -329,29 +309,7 @@ class Measurement2(object):
                 factor = 3
             if not self.has_alpha or (self.image_data[pixel_y][pixel_x*factor+3] > 0):
                 return[self.image_data[pixel_y][pixel_x*factor], self.image_data[pixel_y][pixel_x*factor+1],
-                        self.image_data[pixel_y][pixel_x*factor+2]]
+                       self.image_data[pixel_y][pixel_x*factor+2]]
             else:
-                return [0,0,0]
+                return [0, 0, 0]
 
-    def _get_intensity(self, vector):
-        """
-        Finds the closest machting intensity on the rain scale.
-        FIXME: Doesn't seem to work properly.....
-        """
-
-        # vector needs to have some minimal length
-        if linalg.norm(vector) < 20:
-            return None
-
-        # calculate the distance to all intensities & find the minimal distance
-        distances = map(lambda value: linalg.norm(vector-np_array((value['rgb'][0],value['rgb'][1],value['rgb'][2]))) ,self.meteo_values)
-        min_distance = min(distances)
-
-        # just check that the distance is reasonable
-        if int(min_distance) < 200:
-            intensity = self.meteo_values[distances.index(min(distances))]
-            # check if blank image was shown:
-            if intensity['intensity'] != -1:
-                return intensity
-        else:
-            return None

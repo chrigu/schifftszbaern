@@ -85,7 +85,6 @@ class RainPredictor2(object):
                 if last_sample in history:
                     history.append(closest_match)
 
-
     def _caclulate_vector(self, data):
         # Loop through a raincells history (past positions) and calculate the movement for the next 50min
 

@@ -5,12 +5,9 @@ from Measurement2 import Measurement2
 from RainPredictor2 import RainPredictor2
 from . import get_radar_image
 import png
-from scipy import ndimage
-import json
-# from json import encoder
-import requests
+
 from datetime import datetime, timedelta
-import copy
+
 import urllib
 from . import extrapolate_rain
 
@@ -37,19 +34,25 @@ class Analyzer(object):
             measurement = Measurement2((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, self.test_field_size,
                                        image_data, image_name)
             measurement.analyze_image()
-            data_queue.append(measurement)
-            if settings.DEBUG:
-                print "add sample with timestamp %s"%timestamp
+            #todo: rename .location
+            if not measurement.location:
 
-            if minutes == 0:
-                current_data = measurement
-                last_update = timestamp
+                data_queue.append(measurement)
+                if settings.DEBUG:
+                    print "add sample with timestamp %s" % timestamp
 
-            # except Exception, e:
-            #     print "fail in queuefiller: %s" % e
+                if minutes == 0:
+                    current_data = measurement
+                    last_update = timestamp
 
-            if len(data_queue) == settings.NO_SAMPLES:
-                break
+                # except Exception, e:
+                #     print "fail in queuefiller: %s" % e
+
+                if len(data_queue) == settings.NO_SAMPLES:
+                    break
+            else:
+                print measurement.location
+
         current_data = data_queue[0]
         rp = RainPredictor2(data_queue, current_data.timestamp, 52)
         vector = rp.calculate_movement()
