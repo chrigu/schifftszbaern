@@ -10,6 +10,7 @@ import os
 import settings
 from rain import get_radar_image, extrapolate_rain
 import unittest
+from rain.utils import analyze_image_for_rain, rain_at_position
 
 #Berne, Baby, Berne!
 X_LOCATION = 364
@@ -70,9 +71,10 @@ class PredictionTests(unittest.TestCase):
             url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
             # r = png.Reader(file=open(url.replace('file:', ''), 'r'))
             data, image_name = get_radar_image(url=url)
-            measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, url.split("/")[:-1])
-
-            measurement.analyze_image()
+            # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, url.split("/")[:-1])
+            #
+            # measurement.analyze_image()
+            measurement = analyze_image_for_rain((X_LOCATION, Y_LOCATION), 105, test_image['timestamp'], 1, data, url.split("/")[:-1])
             new_queue.append(measurement)
 
             if now == test_image['timestamp']:
@@ -177,17 +179,18 @@ class ImageAnalyzisTest(unittest.TestCase):
     def _test_image(self, test_image, intensity):
         url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
         data, image_name = get_radar_image(url=url)
-        measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, image_name)
-
-        current_data = measurement.rain_at_position(X_LOCATION, Y_LOCATION)
+        # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, image_name)
+        measurement = analyze_image_for_rain((X_LOCATION, Y_LOCATION), 105, self.start_time, 1, data, image_name)
+        # current_data = measurement.rain_at_position(X_LOCATION, Y_LOCATION)
+        current_data = rain_at_position(X_LOCATION, Y_LOCATION, measurement)
         self.assertEqual(current_data['intensity'], intensity)
 
     def test_blankRadar(self):
         url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), 'blank_test.png')
         data, image_name = get_radar_image(url=url)
-        measurement = Measurement2((X_LOCATION, Y_LOCATION), self.start_time, 1, 105, data, image_name)
-
-        measurement.analyze_image()
+        # measurement = Measurement2((X_LOCATION, Y_LOCATION), self.start_time, 1, 105, data, image_name)
+        measurement = analyze_image_for_rain((X_LOCATION, Y_LOCATION), 105, self.start_time, 1, data, image_name)
+        # measurement.analyze_image()
         self.assertEqual(measurement.location, {})
 
 

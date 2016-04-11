@@ -6,6 +6,9 @@ import png
 from scipy import ndimage
 from numpy import linalg
 from numpy import array as np_array
+import numpy as np
+import uuid
+from Measurement2 import Measurement2
 
 """
 
@@ -95,3 +98,234 @@ def get_intensity(rgb_vector):
             return intensity
     else:
         return None
+
+
+def analyze_image_for_rain(position, test_field_width, timestamp, raster_width, image_data, image_name):
+
+    palette = None
+    if 'palette' in image_data[3]:
+        palette = image_data[3]['palette']
+
+    width = image_data[0]
+    height = image_data[1]
+    has_alpha = image_data[3]['alpha']
+    image_data = list(image_data[2])
+
+    pixel_array = _get_subimage(position[0] - test_field_width / 2, position[1] - test_field_width / 2,
+                                test_field_width, test_field_width, palette, image_data, has_alpha)
+
+    if len(pixel_array) == 0:
+        return None
+
+    image = _make_raster(pixel_array, test_field_width, raster_width)
+    data, label_img = _analyze(image)
+    measurement = Measurement2(position, timestamp, raster_width, test_field_width, image_data, image_name, palette,
+                               has_alpha, data, label_img, image)
+
+    return measurement
+    # location = self.rain_at_position(self.position[0], self.position[1])
+
+
+def _get_subimage(x, y, width, height, palette, image_data, has_alpha):
+    """
+    Returns the image data starting at x, y with width & height
+    """
+    # todo: use ndimage to get
+    pixels = []
+    count = 0
+
+    for i in range(0, height):
+        for j in range(0, width):
+            pixels.append(_get_color_values(x + j, y + i, palette, image_data, has_alpha))
+            count += 1
+
+    return pixels
+
+
+def _make_raster(pixel_array, test_field_width, raster_width):
+    """
+    Downsamples the image (pixel_array) so that it is =
+     test_field_width/self.raster_width * test_field_width/self.raster_width in size.
+    """
+    #todo: check for ndimage methods
+    # Divide image into a raster
+    steps = test_field_width / raster_width
+
+    # create empty pixel (rgb) array
+    raster_array = [[0, 0, 0] for i in range(steps * steps)]
+
+    # loop through all rasters
+    for line in range(0, test_field_width):
+        multiplicator = int(line / raster_width)
+
+        for pixel in range(0, test_field_width):
+            raster = int(pixel / raster_width)
+
+            raster_no = raster + multiplicator * steps
+
+            for i in range(0, 3):
+                raster_array[raster_no][i] += pixel_array[line * test_field_width + pixel][
+                    i]  # pixel_array[line][pixel]
+
+    # average pixel values
+    for pixel in raster_array:
+        for j in range(0, 3):
+            pixel[j] = int(pixel[j] / (raster_width * raster_width))
+
+    tuple_array = []
+
+    # convert array to tuple
+    for pixel in raster_array:
+        tuple_array.append(tuple(pixel))
+
+    from PIL import Image
+
+    downsampled_image = Image.new("RGB", (steps, steps,))
+    downsampled_image.putdata(tuple_array)
+
+    # if settings.SAVE_IMAGES:
+    #     try:
+    #         downsampled_image.save('%s/%s' % (settings.RADAR_IMAGES, self.image_name))
+    #     except Exception, e:
+    #         print e
+    #         pass
+
+    return downsampled_image
+
+
+def _analyze(data):
+    """
+    Finds raincells and calculates center of mass & size for each cell.
+    Returns an array with the raincells.
+    """
+    im = np.array(data)
+
+    rgb = []
+    regions_data = _make_mask(im)
+
+    # calculate position & size of the raincells (raincells are simplified (circular shape))
+    mask = regions_data
+    label_im, nb_labels = ndimage.label(regions_data)
+    label_img = label_im
+    # self.img_data = np.array(test)
+    sizes = ndimage.sum(regions_data, label_im, index=range(0, nb_labels + 1))
+    mean_vals = ndimage.sum(regions_data, label_im, index=range(0, nb_labels + 1))
+    mass = ndimage.center_of_mass(mask, labels=label_im, index=range(0, nb_labels + 1))
+
+    for n in range(0, nb_labels + 1):
+        rgb.append([0, 0, 0])
+
+    # calcualte color value for regions
+    y = 0
+    for line in label_im:
+        x = 0
+        for j in line:
+            if j != 0:
+                for n in range(0, 3):
+                    rgb[j.astype(int)][n] += im[y][x][n]
+            x += 1
+        y += 1
+
+    result = []
+
+    # calculate average color value for regions and map it to the raincell
+    # construct array with all data FIXME: make obj instead of dict
+    for n in range(0, nb_labels + 1):
+
+        if sizes[n] == 0:
+            continue
+
+        region = {'rgb': []}
+        for m in range(0, 3):
+            region['rgb'].append(rgb[n][m] / mean_vals[n])
+
+        # FIXME: use own class not dict
+        # TODO: fix intensity!
+        region['intensity'] = get_intensity(np_array([round(region['rgb'][0]), round(region['rgb'][1]),
+                                                      round(region['rgb'][2])]))
+
+        region['size'] = sizes[n]
+        region['mean_value'] = mean_vals[n]
+        region['center_of_mass'] = [mass[n][0], mass[n][1]]
+        region['id'] = uuid.uuid4().hex
+        region['label'] = n
+        # print "labels: %s"%nb_labels
+
+        result.append(region)
+
+    # if one wanted a plot
+    # plt.figure(figsize=(9,3))
+
+    # plt.subplot(131)
+    # plt.imshow(label_im)
+    # plt.axis('off')
+    # plt.subplot(132)
+    # plt.imshow(mask, cmap=plt.cm.gray)
+    # plt.axis('off')
+    # plt.subplot(133)
+    # plt.imshow(label_im, cmap=plt.cm.spectral)
+    # plt.axis('off')
+
+    # plt.subplots_adjust(wspace=0.02, hspace=0.02, top=1, bottom=0, left=0, right=1)
+    # plt.show()
+
+    return result, label_img
+
+
+def _make_mask(data):
+    # make array that only indicates regions (ie raincells), so that for a given x and y 1 = rain and 0 = no rain
+    out = []
+
+    for i in data:
+        a = []
+        for j in i:
+            if j.any():
+                a.append(1)
+            else:
+                a.append(0)
+
+        out.append(a)
+
+    return np.array(out)
+
+
+def _get_color_values(pixel_x, pixel_y, palette, image_data, has_alpha):
+    """
+    Returns r,g,b for a given pixel. Omits alpha data.
+    """
+
+    if palette:
+        pixel = image_data[pixel_y][pixel_x]
+        return [palette[pixel][0], palette[pixel][1], palette[pixel][2]]
+    else:
+        if has_alpha:
+            factor = 4
+        else:
+            factor = 3
+
+        if not has_alpha or (image_data[pixel_y][pixel_x * factor + 3] > 0):
+            return [image_data[pixel_y][pixel_x * factor], image_data[pixel_y][pixel_x * factor + 1],
+                    image_data[pixel_y][pixel_x * factor + 2]]
+        else:
+            return [0, 0, 0]
+
+
+def rain_at_position(x, y, sample):
+    """
+    Get rain intensity for position at x, y
+    """
+    _get_color_values(x, y, sample.palette, sample.image_data, sample.has_alpha)
+    pixels = []
+
+    rgb_values = [0, 0, 0]
+    for y_pos in range(y-1, y+2):
+        for x_pos in range(x-1, x+2):
+
+            pixel = _get_color_values(x, y, sample.palette, sample.image_data, sample.has_alpha)
+            pixels.append(pixel)
+
+            for i in range(0, 3):
+                rgb_values[i] += pixel[i]
+
+    max_value = max(pixels, key=tuple)
+    return get_intensity(np_array(max_value))

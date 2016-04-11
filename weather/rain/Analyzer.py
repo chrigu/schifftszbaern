@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import urllib
 from . import extrapolate_rain
 
+
 class Analyzer(object):
 
     def __init__(self, test_field_size, no_samples):
@@ -22,7 +23,6 @@ class Analyzer(object):
         data_queue = []
         now = datetime.now()
         latest_radar = now - timedelta(0, 10*60)     # radar has a 8minute-ish delay, so go 10minutes back in time
-        timestamp = self._build_timestamp(latest_radar)
 
         # get data from srf.ch up to now
         for minutes in range(0, self.no_samples):
