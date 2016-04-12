@@ -352,7 +352,7 @@ class Measurement(object):
                 return[self.image_data[pixel_y][pixel_x*factor], self.image_data[pixel_y][pixel_x*factor+1],
                         self.image_data[pixel_y][pixel_x*factor+2]]
             else:
-                return [0,0,0]
+                return [0, 0, 0]
 
     def _get_intensity(self, vector):
         """

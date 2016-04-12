@@ -187,3 +187,4 @@ Some basic tests can be run from the weather directory. You can run `python test
 * Refactor tests
 * Move test to own directory
 * Move some weather analysis to own module
+* Use only Pillow

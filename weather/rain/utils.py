@@ -2,13 +2,14 @@
 
 # Created on 03/04/16
 # @author: chrigu <christian.cueni@gmail.com>
+from PIL import Image
 import png
 from scipy import ndimage
 from numpy import linalg
 from numpy import array as np_array
 import numpy as np
 import uuid
-from Measurement2 import Measurement2
+from Measurement3 import Measurement3
 
 """
 
@@ -60,7 +61,7 @@ def extrapolate_rain(vector, sample, test_field_size):
         rounded_vector = map(lambda x: round(x * index), vector)  # todo: test
         img = ndimage.shift(sample.label_img, rounded_vector, mode='nearest')
         label = img[int(test_field_size / 2)][int(test_field_size / 2)]  # todo: test area not point
-        png_writer.write(open("testshift%s_%s.png" % (label, index), 'wb'), img*10)
+        # png_writer.write(open("testshift%s_%s.png" % (label, index), 'wb'), img*10)
 
         for x in range((test_field_size / 2) - 2, (test_field_size / 2) + 3):
             for y in range((test_field_size / 2) - 2, (test_field_size / 2) + 3):
@@ -100,46 +101,58 @@ def get_intensity(rgb_vector):
         return None
 
 
-def analyze_image_for_rain(position, test_field_width, timestamp, raster_width, image_data, image_name):
+# def analyze_image_for_rain(position, test_field_width, timestamp, raster_width, image_data, image_name):
+#
+#     palette = None
+#     if 'palette' in image_data[3]:
+#         palette = image_data[3]['palette']
+#
+#     width = image_data[0]
+#     height = image_data[1]
+#     has_alpha = image_data[3]['alpha']
+#     image_data = list(image_data[2])
+#     from numpy import array
+#     some = array(image_data)
+#
+#     pixel_array = _get_subimage(position[0] - test_field_width / 2, position[1] - test_field_width / 2,
+#                                 test_field_width, test_field_width, palette, image_data, has_alpha)
+#
+#     if len(pixel_array) == 0:
+#         return None
+#
+#     image = _make_raster(pixel_array, test_field_width, raster_width)
+#     data, label_img = _analyze(image)
+#     measurement = Measurement2(position, timestamp, raster_width, test_field_width, image_data, image_name, palette,
+#                                has_alpha, data, label_img, image)
+#
+#     return measurement
+#     # location = self.rain_at_position(self.position[0], self.position[1])
 
-    palette = None
-    if 'palette' in image_data[3]:
-        palette = image_data[3]['palette']
+def analyze_image_for_rain(radar_image, timestamp):
 
-    width = image_data[0]
-    height = image_data[1]
-    has_alpha = image_data[3]['alpha']
-    image_data = list(image_data[2])
 
-    pixel_array = _get_subimage(position[0] - test_field_width / 2, position[1] - test_field_width / 2,
-                                test_field_width, test_field_width, palette, image_data, has_alpha)
-
-    if len(pixel_array) == 0:
-        return None
-
-    image = _make_raster(pixel_array, test_field_width, raster_width)
-    data, label_img = _analyze(image)
-    measurement = Measurement2(position, timestamp, raster_width, test_field_width, image_data, image_name, palette,
-                               has_alpha, data, label_img, image)
+    # image = _make_raster(pixel_array, test_field_width, raster_width)
+    data, label_img = _analyze(radar_image._image_data)
+    measurement = Measurement3(radar_image, timestamp, data, label_img)
 
     return measurement
     # location = self.rain_at_position(self.position[0], self.position[1])
 
 
-def _get_subimage(x, y, width, height, palette, image_data, has_alpha):
-    """
-    Returns the image data starting at x, y with width & height
-    """
-    # todo: use ndimage to get
-    pixels = []
-    count = 0
-
-    for i in range(0, height):
-        for j in range(0, width):
-            pixels.append(_get_color_values(x + j, y + i, palette, image_data, has_alpha))
-            count += 1
-
-    return pixels
+# def _get_subimage(x, y, width, height, palette, image_data, has_alpha):
+#     """
+#     Returns the image data starting at x, y with width & height
+#     """
+#     # todo: use ndimage to get
+#     pixels = []
+#     count = 0
+#
+#     for i in range(0, height):
+#         for j in range(0, width):
+#             pixels.append(_get_color_values(x + j, y + i, palette, image_data, has_alpha))
+#             count += 1
+#
+#     return pixels
 
 
 def _make_raster(pixel_array, test_field_width, raster_width):
@@ -177,8 +190,6 @@ def _make_raster(pixel_array, test_field_width, raster_width):
     # convert array to tuple
     for pixel in raster_array:
         tuple_array.append(tuple(pixel))
-
-    from PIL import Image
 
     downsampled_image = Image.new("RGB", (steps, steps,))
     downsampled_image.putdata(tuple_array)
@@ -288,44 +299,3 @@ def _make_mask(data):
 
     return np.array(out)
 
-
-def _get_color_values(pixel_x, pixel_y, palette, image_data, has_alpha):
-    """
-    Returns r,g,b for a given pixel. Omits alpha data.
-    """
-
-    if palette:
-        pixel = image_data[pixel_y][pixel_x]
-        return [palette[pixel][0], palette[pixel][1], palette[pixel][2]]
-    else:
-        if has_alpha:
-            factor = 4
-        else:
-            factor = 3
-
-        if not has_alpha or (image_data[pixel_y][pixel_x * factor + 3] > 0):
-            return [image_data[pixel_y][pixel_x * factor], image_data[pixel_y][pixel_x * factor + 1],
-                    image_data[pixel_y][pixel_x * factor + 2]]
-        else:
-            return [0, 0, 0]
-
-
-def rain_at_position(x, y, sample):
-    """
-    Get rain intensity for position at x, y
-    """
-    _get_color_values(x, y, sample.palette, sample.image_data, sample.has_alpha)
-    pixels = []
-
-    rgb_values = [0, 0, 0]
-    for y_pos in range(y-1, y+2):
-        for x_pos in range(x-1, x+2):
-
-            pixel = _get_color_values(x, y, sample.palette, sample.image_data, sample.has_alpha)
-            pixels.append(pixel)
-
-            for i in range(0, 3):
-                rgb_values[i] += pixel[i]
-
-    max_value = max(pixels, key=tuple)
-    return get_intensity(np_array(max_value))

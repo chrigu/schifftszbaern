@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import settings
 
+from PIL import Image
+from numpy import array
+import cStringIO
 from datetime import datetime, timedelta
 import png
 import urllib
@@ -83,7 +86,7 @@ def build_timestamp(time, forecast=False):
     return rounded_time
 
 
-def get_radar_image(timestamp=None, forecast=False, url=None):
+def get_radar_image(crop_coords, timestamp=None, forecast=False, url=None):
 
     if url and url.startswith('file:'):
         r = png.Reader(file=open(url.replace('file:', ''), 'r'))
@@ -112,9 +115,35 @@ def get_radar_image(timestamp=None, forecast=False, url=None):
 
     # get the png's properties
     try:
-        data = r.read()
-        return data, image_name
+        radar_image = RadarImage(url, crop_coords, image_name)
+        return radar_image
+        # data = r.read()
+        # return data, image_name
 
     except png.FormatError, e:
         print "get_radar_image: %s" % e
         return None, None
+
+
+class RadarImage(object):
+    def __init__(self, url, crop_coords, image_name):
+        print crop_coords
+        image_file = cStringIO.StringIO(urllib.urlopen(url).read())
+        image = Image.open(image_file)
+
+        if image.palette:
+            image = image.convert(mode='RGBA')
+
+        self._image_data = array(image.crop(crop_coords))
+        self._image_name = image_name
+
+        if self._image_data.shape[2] == 4:
+            self._has_alpha = True
+        else:
+            self._has_alpha = False
+
+    def get_rgb_for_position(self, position):
+        return self._image_data[position[0]][position[1]][:-1]
+
+
+
