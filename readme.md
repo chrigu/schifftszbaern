@@ -176,7 +176,6 @@ Some basic tests can be run from the weather directory. You can run `python test
 ##Todo
 
 * Refactor code & hierarchy
-* use python3
 * Documentation (obviously)
 * 1 config file for everything
 * remove magic numbers
@@ -188,3 +187,4 @@ Some basic tests can be run from the weather directory. You can run `python test
 * Move test to own directory
 * Move some weather analysis to own module
 * Use only Pillow
+* use python3

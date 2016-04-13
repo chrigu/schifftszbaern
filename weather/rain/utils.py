@@ -2,14 +2,16 @@
 
 # Created on 03/04/16
 # @author: chrigu <christian.cueni@gmail.com>
-from PIL import Image
+import os, sys
 import png
 from scipy import ndimage
 from numpy import linalg
 from numpy import array as np_array
-import numpy as np
 import uuid
-from Measurement import Measurement
+import math
+#todo: remove
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
+import settings
 
 """
 
@@ -76,226 +78,134 @@ def extrapolate_rain(vector, sample, test_field_size):
 
     return -1, None
 
+def _init_samples(data):
+    new_data = []
+    n_1_values = []
 
-def get_intensity(rgb_vector):
-    """
-    Finds the closest matching intensity for a given color
-    """
+    # add the cells from the latest samples to an array
+    for latest_samples in data[0].data:
+        new_data.append([latest_samples])
+        n_1_values.append(latest_samples)
 
-    # rgb_vector needs to have some minimal length
-    if linalg.norm(rgb_vector) < 20:
-        return None
-
-    # calculate the distance to all intensities & find the minimal distance
-    distances = map(lambda value: linalg.norm(rgb_vector - np_array((value['rgb'][0], value['rgb'][1], value['rgb'][2]))),
-                    RAIN_INTENSITIES)
-    min_distance = min(distances)
-
-    # just check that the distance is reasonable
-    if int(min_distance) < 200:
-        intensity = RAIN_INTENSITIES[distances.index(min(distances))]
-        # check if blank image was shown:
-        if intensity['intensity'] != -1:
-            return intensity
-    else:
-        return None
+    return new_data, n_1_values
 
 
-# def analyze_image_for_rain(position, test_field_width, timestamp, raster_width, image_data, image_name):
-#
-#     palette = None
-#     if 'palette' in image_data[3]:
-#         palette = image_data[3]['palette']
-#
-#     width = image_data[0]
-#     height = image_data[1]
-#     has_alpha = image_data[3]['alpha']
-#     image_data = list(image_data[2])
-#     from numpy import array
-#     some = array(image_data)
-#
-#     pixel_array = _get_subimage(position[0] - test_field_width / 2, position[1] - test_field_width / 2,
-#                                 test_field_width, test_field_width, palette, image_data, has_alpha)
-#
-#     if len(pixel_array) == 0:
-#         return None
-#
-#     image = _make_raster(pixel_array, test_field_width, raster_width)
-#     data, label_img = _analyze(image)
-#     measurement = Measurement2(position, timestamp, raster_width, test_field_width, image_data, image_name, palette,
-#                                has_alpha, data, label_img, image)
-#
-#     return measurement
-#     # location = self.rain_at_position(self.position[0], self.position[1])
+def _find_closest_old_cells(data, newer_data):
+    close_points = {}
 
-def analyze_image_for_rain(radar_image, timestamp):
+    # loop through all raincells for a given time and try to find the closest raincell from 5 or 10 minutes ago
+    # so we can track the movement of a cell
+    for sample in data.data:
+        position = np_array(sample['center_of_mass'])
+
+        # get distances to all raincells from 5 or 10 minutes ago
+        distances = map(lambda new_sample: linalg.norm(position - np_array(new_sample['center_of_mass'])), newer_data)
+
+        if distances != []:
+
+            min_distance = min(distances)
+            # just some treshold (about 9.6km (if delta is 5 minutes this is about 115km/h))
+            if min_distance < 4:
+                closest_match = newer_data[distances.index(min_distance)]
+                if not closest_match['id'] in close_points:
+                    close_points[closest_match['id']] = [sample]
+                else:
+                    close_points[closest_match['id']].append(sample)
+
+    return close_points
 
 
-    # image = _make_raster(pixel_array, test_field_width, raster_width)
-    data, label_img = _analyze(radar_image._image_data)
-    measurement = Measurement(radar_image, timestamp, data, label_img)
+def _add_to_closest_match_to_history(data, newer_values, close_points, new_data):
+    # find the closest match among the cells for a given time
+    for last_sample in newer_values:  # FIXME: rename to new_smample
+        position = np_array(last_sample['center_of_mass'])
+        if last_sample['id'] in close_points:
+            distances = map(lambda close_sample: linalg.norm(position - np_array(close_sample['center_of_mass'])),
+                            close_points[last_sample['id']])
+            closest_match = close_points[last_sample['id']][distances.index(min(distances))]
+            closest_match['movement'] = position - np_array(
+                closest_match['center_of_mass'])  # FIXME: add movement to n-1 value
+            closest_match['forecast'] = data.forecast
+            closest_match['timestamp'] = data.timestamp
+        else:
+            # FIXME: change to last pos
+            closest_match = {
+                'center_of_mass': [-99, -99],
+                'movement': [0, 0],
+                'size': 0
+            }
+            closest_match['forecast'] = data.forecast
+            closest_match['timestamp'] = data.timestamp
 
-    return measurement
-    # location = self.rain_at_position(self.position[0], self.position[1])
-
-
-# def _get_subimage(x, y, width, height, palette, image_data, has_alpha):
-#     """
-#     Returns the image data starting at x, y with width & height
-#     """
-#     # todo: use ndimage to get
-#     pixels = []
-#     count = 0
-#
-#     for i in range(0, height):
-#         for j in range(0, width):
-#             pixels.append(_get_color_values(x + j, y + i, palette, image_data, has_alpha))
-#             count += 1
-#
-#     return pixels
-
-
-def _make_raster(pixel_array, test_field_width, raster_width):
-    """
-    Downsamples the image (pixel_array) so that it is =
-     test_field_width/self.raster_width * test_field_width/self.raster_width in size.
-    """
-    #todo: check for ndimage methods
-    # Divide image into a raster
-    steps = test_field_width / raster_width
-
-    # create empty pixel (rgb) array
-    raster_array = [[0, 0, 0] for i in range(steps * steps)]
-
-    # loop through all rasters
-    for line in range(0, test_field_width):
-        multiplicator = int(line / raster_width)
-
-        for pixel in range(0, test_field_width):
-            raster = int(pixel / raster_width)
-
-            raster_no = raster + multiplicator * steps
-
-            for i in range(0, 3):
-                raster_array[raster_no][i] += pixel_array[line * test_field_width + pixel][
-                    i]  # pixel_array[line][pixel]
-
-    # average pixel values
-    for pixel in raster_array:
-        for j in range(0, 3):
-            pixel[j] = int(pixel[j] / (raster_width * raster_width))
-
-    tuple_array = []
-
-    # convert array to tuple
-    for pixel in raster_array:
-        tuple_array.append(tuple(pixel))
-
-    downsampled_image = Image.new("RGB", (steps, steps,))
-    downsampled_image.putdata(tuple_array)
-
-    # if settings.SAVE_IMAGES:
-    #     try:
-    #         downsampled_image.save('%s/%s' % (settings.RADAR_IMAGES, self.image_name))
-    #     except Exception, e:
-    #         print e
-    #         pass
-
-    return downsampled_image
+        for history in new_data:
+            if last_sample in history:
+                history.append(closest_match)
 
 
-def _analyze(data):
-    """
-    Finds raincells and calculates center of mass & size for each cell.
-    Returns an array with the raincells.
-    """
-    im = np.array(data)
+def _caclulate_vector(data):
+    # Loop through a raincells history (past positions) and calculate the movement for the next 50min
 
-    rgb = []
-    regions_data = _make_mask(im)
+    hits = []
+    vectors = []
+    for history in data:
 
-    # calculate position & size of the raincells (raincells are simplified (circular shape))
-    mask = regions_data
-    label_im, nb_labels = ndimage.label(regions_data)
-    label_img = label_im
-    # self.img_data = np.array(test)
-    sizes = ndimage.sum(regions_data, label_im, index=range(0, nb_labels + 1))
-    mean_vals = ndimage.sum(regions_data, label_im, index=range(0, nb_labels + 1))
-    mass = ndimage.center_of_mass(mask, labels=label_im, index=range(0, nb_labels + 1))
+        if settings.DEBUG:
+            print "***** cell forecast *****"
 
-    for n in range(0, nb_labels + 1):
-        rgb.append([0, 0, 0])
+        # get average movement
+        coms = np_array(
+            map(lambda sample: sample['movement'], history[1:settings.NO_SAMPLES]))  # FIXME: movement in wrong sample
+        mean = coms.mean(axis=0)
+        vectors.append(mean)
 
-    # calcualte color value for regions
-    y = 0
-    for line in label_im:
-        x = 0
-        for j in line:
-            if j != 0:
-                for n in range(0, 3):
-                    rgb[j.astype(int)][n] += im[y][x][n]
-            x += 1
-        y += 1
+        # get last position
+        initial_position = np_array(history[0]['center_of_mass'])
+        try:
+            radius_abs = math.sqrt(history[0]['size'] / math.pi)
 
-    result = []
+        except Exception, e:
+            print e
+            radius_abs = 0
 
-    # calculate average color value for regions and map it to the raincell
-    # construct array with all data FIXME: make obj instead of dict
-    for n in range(0, nb_labels + 1):
+        if settings.DEBUG:
+            print "last_pos: %s, mean %s" % (initial_position, mean)
 
-        if sizes[n] == 0:
+            # hit = self._find_future_hit(history[0], initial_position, radius_abs, mean, 0.5)
+
+            # if hit:
+            #     hits.append(hit)
+
+    # todo: calc vectors
+    avg_vector = reduce(lambda x, y: x + y, vectors) / len(vectors)
+
+    return avg_vector
+
+
+def calculate_movement(data, last_timestamp, center):
+
+
+    data = sorted(data, key=lambda x: x.timestamp, reverse=True)
+    last_timestamp = last_timestamp
+    center = center
+
+    new_data, n_1_values = _init_samples(data)
+
+    # go through the rest of the data (time descending)
+    for index in range(1, len(data)):
+        # check if the samples have max. a 10min difference between them.
+        try:
+            dt = data[index - 1].timestamp - data[index].timestamp
+
+            if dt.seconds > 10 * 60:
+                break
+
+        except Exception, e:
+            print "error: %s" % e
             continue
 
-        region = {'rgb': []}
-        for m in range(0, 3):
-            region['rgb'].append(rgb[n][m] / mean_vals[n])
+        close_points = _find_closest_old_cells(data[index], n_1_values)
+        _add_to_closest_match_to_history(data[index], n_1_values, close_points, new_data)
 
-        # FIXME: use own class not dict
-        # TODO: fix intensity!
-        region['intensity'] = get_intensity(np_array([round(region['rgb'][0]), round(region['rgb'][1]),
-                                                      round(region['rgb'][2])]))
+        n_1_values = data[index].data
 
-        region['size'] = sizes[n]
-        region['mean_value'] = mean_vals[n]
-        region['center_of_mass'] = [mass[n][0], mass[n][1]]
-        region['id'] = uuid.uuid4().hex
-        region['label'] = n
-        # print "labels: %s"%nb_labels
-
-        result.append(region)
-
-    # if one wanted a plot
-    # plt.figure(figsize=(9,3))
-
-    # plt.subplot(131)
-    # plt.imshow(label_im)
-    # plt.axis('off')
-    # plt.subplot(132)
-    # plt.imshow(mask, cmap=plt.cm.gray)
-    # plt.axis('off')
-    # plt.subplot(133)
-    # plt.imshow(label_im, cmap=plt.cm.spectral)
-    # plt.axis('off')
-
-    # plt.subplots_adjust(wspace=0.02, hspace=0.02, top=1, bottom=0, left=0, right=1)
-    # plt.show()
-
-    return result, label_img
-
-
-def _make_mask(data):
-    # make array that only indicates regions (ie raincells), so that for a given x and y 1 = rain and 0 = no rain
-    out = []
-
-    for i in data:
-        a = []
-        for j in i:
-            if j.any():
-                a.append(1)
-            else:
-                a.append(0)
-
-        out.append(a)
-
-    return np.array(out)
-
+    return _caclulate_vector(new_data)

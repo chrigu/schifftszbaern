@@ -9,8 +9,8 @@ from weatherchecks import does_it_snow
 import os
 import settings
 from rain import extrapolate_rain, RadarImage
+from rain.utils import calculate_movement
 import unittest
-from rain.utils import analyze_image_for_rain
 
 #Berne, Baby, Berne!
 X_LOCATION = 364
@@ -88,6 +88,8 @@ class PredictionTests(unittest.TestCase):
         # next_hit = get_prediction_data(current_data, new_queue, {}, False)
         predictor = RainPredictor2(new_queue, current_data.timestamp, 52)
         vector = predictor.calculate_movement()
+
+        vector = calculate_movement(new_queue, current_data.timestamp, 52)
         #todo: fix .data on data obj. shouldn't be an obj
         # time_to_hit, data = new_queue[0].calc_matrix(vector)
         time_to_hit, data = extrapolate_rain(vector, new_queue[0], 105)

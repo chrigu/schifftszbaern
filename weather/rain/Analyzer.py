@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 
 import urllib
 from . import extrapolate_rain
-from utils import analyze_image_for_rain
 
 
 class Analyzer(object):
@@ -39,7 +38,7 @@ class Analyzer(object):
             # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, url.split("/")[:-1])
             #
             # measurement.analyze_image()
-            measurement = analyze_image_for_rain(radar_image, timestamp)
+            measurement = Measurement(radar_image, timestamp)
             #todo: rename .location
             if not measurement.location:
 
@@ -84,35 +83,3 @@ class Analyzer(object):
 
         return rounded_time
 
-    def _get_radar_image(self, timestamp, forecast=False, url=False):
-
-        timestring = self.get_timestring(timestamp)
-
-        if not forecast and not url:
-            image_name = "PPIMERCATOR.%s.png" % (timestring)
-        else:
-            # this is sometimes not available from the website, so it is currently not used here
-            image_name = "FCSTMERCATOR.%s.png" % (timestring)
-
-        image_name = image_name
-
-        if not forecast and not url:
-            url = "http://www.srfcdn.ch/meteo/nsradar/media/web/%s" % (image_name)
-
-        # use local files. Mainly for testing
-        if url.startswith('file:'):
-            r = png.Reader(file=open(url.replace('file:', ''), 'r'))
-            self.local = True
-        else:
-            file = urllib.urlopen(url)
-            r = png.Reader(file=file)
-            self.local = False
-
-        # get the png's properties
-        try:
-            data = r.read()
-
-            return data, image_name
-
-        except png.FormatError, e:
-            return None, None
