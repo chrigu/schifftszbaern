@@ -9,7 +9,7 @@ from numpy import linalg
 from numpy import array as np_array
 import numpy as np
 import uuid
-from Measurement3 import Measurement3
+from Measurement import Measurement
 
 """
 
@@ -133,7 +133,7 @@ def analyze_image_for_rain(radar_image, timestamp):
 
     # image = _make_raster(pixel_array, test_field_width, raster_width)
     data, label_img = _analyze(radar_image._image_data)
-    measurement = Measurement3(radar_image, timestamp, data, label_img)
+    measurement = Measurement(radar_image, timestamp, data, label_img)
 
     return measurement
     # location = self.rain_at_position(self.position[0], self.position[1])

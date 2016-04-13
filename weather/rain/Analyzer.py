@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import settings
-from Measurement2 import Measurement2
+from Measurement import Measurement
 from RainPredictor2 import RainPredictor2
-from . import get_radar_image
+from . import RadarImage
 import png
 
 from datetime import datetime, timedelta
 
 import urllib
 from . import extrapolate_rain
+from utils import analyze_image_for_rain
 
 
 class Analyzer(object):
@@ -30,10 +31,15 @@ class Analyzer(object):
 
             # try:
             # todo catch error
-            image_data, image_name = get_radar_image(timestamp=timestamp)
-            measurement = Measurement2((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, self.test_field_size,
-                                       image_data, image_name)
-            measurement.analyze_image()
+            # image_data, image_name = get_radar_image(timestamp=timestamp)
+            # measurement = Measurement2((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, self.test_field_size,
+            #                            image_data, image_name)
+            # measurement.analyze_image()
+            radar_image = RadarImage((settings.X_LOCATION-52, settings.Y_LOCATION-52, settings.X_LOCATION+52, settings.Y_LOCATION+52), timestamp=timestamp)
+            # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, url.split("/")[:-1])
+            #
+            # measurement.analyze_image()
+            measurement = analyze_image_for_rain(radar_image, timestamp)
             #todo: rename .location
             if not measurement.location:
 

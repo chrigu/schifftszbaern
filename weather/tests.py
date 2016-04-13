@@ -1,6 +1,6 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
-from rain.Measurement2 import Measurement2
+from rain.Measurement import Measurement
 from rain import build_timestamp, get_prediction_data
 from rain.RainPredictor2 import RainPredictor2
 from rain.Analyzer import Analyzer
@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from weatherchecks import does_it_snow
 import os
 import settings
-from rain import get_radar_image, extrapolate_rain
+from rain import extrapolate_rain, RadarImage
 import unittest
 from rain.utils import analyze_image_for_rain
 
@@ -71,11 +71,12 @@ class PredictionTests(unittest.TestCase):
             url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
             # r = png.Reader(file=open(url.replace('file:', ''), 'r'))
             # data, image_name = get_radar_image((X_LOCATION, Y_LOCATION, X_LOCATION+105, Y_LOCATION+105), url=url)
-            radar_image = get_radar_image((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
+            radar_image = RadarImage((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
             # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, url.split("/")[:-1])
             #
             # measurement.analyze_image()
-            measurement = analyze_image_for_rain(radar_image, test_image['timestamp'])
+            # measurement = analyze_image_for_rain(radar_image, test_image['timestamp'])
+            measurement = Measurement(radar_image, test_image['timestamp'])
             new_queue.append(measurement)
 
             if now == test_image['timestamp']:
@@ -179,18 +180,22 @@ class ImageAnalyzisTest(unittest.TestCase):
 
     def _test_image(self, test_image, intensity):
         url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
-        radar_image = get_radar_image((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
+        # radar_image = get_radar_image((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
+        radar_image = RadarImage((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
         # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, image_name)
-        measurement = analyze_image_for_rain(radar_image, self.start_time)
+        # measurement = analyze_image_for_rain(radar_image, self.start_time)
+        measurement = Measurement(radar_image, self.start_time)
+
         # current_data = measurement.rain_at_position(X_LOCATION, Y_LOCATION)
         current_data = measurement.rain_at_position(52, 52)
         self.assertEqual(current_data['intensity'], intensity)
 
     def test_blankRadar(self):
         url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), 'blank_test.png')
-        radar_image = get_radar_image((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
+        radar_image = RadarImage((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
         # measurement = Measurement2((X_LOCATION, Y_LOCATION), self.start_time, 1, 105, data, image_name)
-        measurement = analyze_image_for_rain(radar_image, self.start_time)
+        # measurement = analyze_image_for_rain(radar_image, self.start_time)
+        measurement = Measurement(radar_image, self.start_time)
         # measurement.analyze_image()
         self.assertEqual(measurement.location, {})
 
