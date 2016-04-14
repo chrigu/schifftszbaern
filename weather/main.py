@@ -137,5 +137,5 @@ def schiffts():
 
 if __name__ == '__main__':
     # schiffts()
-    from rain.Analyzer import Analyzer
-    analyzer = Analyzer(105, settings.NO_SAMPLES)
+    from rain import get_rain_info
+    print get_rain_info(105, settings.NO_SAMPLES)

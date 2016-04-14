@@ -12,6 +12,8 @@ import math
 #todo: remove
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
 import settings
+from datetime import datetime
+from collections import Counter
 
 """
 
@@ -36,6 +38,9 @@ extrem 0/200/255
 
 """
 
+def get_timestring(timestamp):
+    return datetime.strftime(timestamp, settings.DATE_FORMAT)
+
 RAIN_INTENSITIES = [{'name': '1mm/h', 'rgb': [0, 150, 255], 'intensity': 0},
                     {'name': '3mm/h', 'rgb': [0, 50, 255], 'intensity': 1},
                     {'name': '10mm/h', 'rgb': [0, 0, 200], 'intensity': 2},
@@ -54,10 +59,13 @@ RAIN_INTENSITIES = [{'name': '1mm/h', 'rgb': [0, 150, 255], 'intensity': 0},
 def extrapolate_rain(vector, sample, test_field_size):
     print "shifting image %s %s" % (vector.tolist(), type(vector))
 
+    next_hit = None
+
     png_writer = png.Writer(width=test_field_size, height=test_field_size, greyscale=True)
     for index in range(1, 15):
 
-        value_sum = 0
+        label_count = 0
+        labels = []
         label = -1
 
         rounded_vector = map(lambda x: round(x * index), vector)  # todo: test
@@ -65,18 +73,28 @@ def extrapolate_rain(vector, sample, test_field_size):
         label = img[int(test_field_size / 2)][int(test_field_size / 2)]  # todo: test area not point
         # png_writer.write(open("testshift%s_%s.png" % (label, index), 'wb'), img*10)
 
-        for x in range((test_field_size / 2) - 2, (test_field_size / 2) + 3):
-            for y in range((test_field_size / 2) - 2, (test_field_size / 2) + 3):
-                value_sum += img[x][y]
-                #todo assign label
-                # if label == -1:
-                #     label = img[test_field_size/2][test_field_size/2]
+        for x in range((test_field_size / 2) - 1, (test_field_size / 2) + 2):
+            for y in range((test_field_size / 2) - 1, (test_field_size / 2) + 2):
+                if img[x][y] != 0:
+                    label_count += 1
+                    labels.append(img[x][y])
 
-        if label > 0:
-            print "hit, label %s in %s minutes" % (label, index * 10)
-            return index * 5, sample.get_data_for_label(label)
+        if label_count > 5:
+            label = Counter(labels).keys()[0]
 
-    return -1, None
+            data = sample.get_data_for_label(label)
+            next_hit = {}
+            next_hit['hit_factor'] = 2
+            # no need to be too precise
+            next_hit['time_delta'] = int(index * 5)
+            next_hit['size'] = int(data['size'])
+            # next_hit['time'] = datetime.strftime(impact_time, "%H%M")
+            next_hit['intensity'] = data['intensity']
+            print "hit, label %s in %s minutes" % (label, index * 5)
+            break
+
+    return next_hit
+
 
 def _init_samples(data):
     new_data = []
@@ -182,7 +200,6 @@ def _caclulate_vector(data):
 
 
 def calculate_movement(data, last_timestamp, center):
-
 
     data = sorted(data, key=lambda x: x.timestamp, reverse=True)
     last_timestamp = last_timestamp

@@ -1,17 +1,69 @@
 # -*- coding: utf-8 -*-
 import settings
 
-from PIL import Image
-from numpy import array
-import cStringIO
 from datetime import datetime, timedelta
 import png
-import urllib
+
 from utils import extrapolate_rain
 from numpy import array as np_array
 from Measurement import Measurement
-from RainPredictor import RainPredictor
+from RadarImage import RadarImage
+from RainPredictor2 import RainPredictor2
 from AmbientDataFetcher import AmbientDataFetcher
+from utils import get_timestring, calculate_movement
+
+def get_rain_info(test_field_size, no_samples):
+
+        # get date
+        data_queue = []
+        now = datetime.now()
+        latest_radar = now - timedelta(0, 10*60)     # radar has a 8minute-ish delay, so go 10minutes back in time
+
+        # get data from srf.ch up to now
+        for minutes in range(0, no_samples):
+            timestamp = build_timestamp(latest_radar - timedelta(0, 60*5*minutes))
+
+            # try:
+            # todo catch error
+            # image_data, image_name = get_radar_image(timestamp=timestamp)
+            # measurement = Measurement2((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, self.test_field_size,
+            #                            image_data, image_name)
+            # measurement.analyze_image()
+            radar_image = RadarImage((settings.X_LOCATION-52, settings.Y_LOCATION-52, settings.X_LOCATION+52, settings.Y_LOCATION+52), timestamp=timestamp)
+            # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, url.split("/")[:-1])
+            #
+            # measurement.analyze_image()
+            measurement = Measurement(radar_image, timestamp)
+            #todo: rename .location
+            if not measurement.location:
+
+                data_queue.append(measurement)
+                if settings.DEBUG:
+                    print "add sample with timestamp %s" % timestamp
+
+                if minutes == 0:
+                    current_data = measurement
+                    last_update = timestamp
+
+                # except Exception, e:
+                #     print "fail in queuefiller: %s" % e
+
+                if len(data_queue) == settings.NO_SAMPLES:
+                    break
+            else:
+                print measurement.location
+
+        current_data = data_queue[0]
+        # rp = RainPredictor2(data_queue, current_data.timestamp, 52)
+        # vector = rp.calculate_movement()
+        vector = calculate_movement(data_queue, current_data.timestamp, 52)
+        next_hit = extrapolate_rain(vector, data_queue[0], test_field_size)
+        if next_hit:
+            print "hit in %s, size %s, intensity %s" % (next_hit['time_delta'], next_hit['size'], next_hit['intensity'])
+        else:
+            print "no hit"
+
+        return current_data, next_hit
 
 
 def build_timestamp(time, forecast=False):
@@ -34,7 +86,7 @@ def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
 
         next_hit = {}
 
-        predictor = RainPredictor(data_queue, current_data.timestamp, 18)
+        predictor = RainPredictor2(data_queue, current_data.timestamp, 18)
         try:
             time_delta, size, impact_time, hit_factor, hit_intensity = predictor.make_forecast()
             if settings.DEBUG:
@@ -68,9 +120,6 @@ def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
             return {}
 
 
-def get_timestring(timestamp):
-    return datetime.strftime(timestamp, settings.DATE_FORMAT)
-
 
 def build_timestamp(time, forecast=False):
     """
@@ -84,52 +133,4 @@ def build_timestamp(time, forecast=False):
     rounded_time = (time - rounded_delta).replace(second=0, microsecond=0)
 
     return rounded_time
-
-
-class RadarImage(object):
-    def __init__(self, crop_coords, url=None, timestamp=None, forecast=None):
-
-        url, image_name = self._get_image_name(timestamp, forecast, url)
-
-        image_file = cStringIO.StringIO(urllib.urlopen(url).read())
-        image = Image.open(image_file)
-
-        if image.palette:
-            image = image.convert(mode='RGBA')
-
-        self._image_data = array(image.crop(crop_coords))
-        self._image_name = image_name
-        # import scipy
-        # scipy.misc.imsave('outfile.png', self._image_data)
-
-        if self._image_data.shape[2] == 4:
-            self._has_alpha = True
-        else:
-            self._has_alpha = False
-
-    def get_rgb_for_position(self, position):
-        return self._image_data[position[0]][position[1]][:-1]
-
-    @staticmethod
-    def _get_image_name(timestamp, forecast, url):
-
-        if url and url.startswith('file:'):
-            image_name = url.replace('file:', '')
-
-        else:
-            timestring = get_timestring(timestamp)
-
-            if not forecast and not url:
-                image_name = "PPIMERCATOR.%s.png" % (timestring)
-            else:
-                # this is sometimes not available from the website, so it is currently not used here
-                image_name = "FCSTMERCATOR.%s.png" % (timestring)
-
-            if not forecast and not url:
-                url = "http://www.srfcdn.ch/meteo/nsradar/media/web/%s" % (image_name)
-
-            # use local files. Mainly for testing
-
-        return url, image_name
-
 

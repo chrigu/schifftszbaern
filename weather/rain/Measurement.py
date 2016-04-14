@@ -82,8 +82,8 @@ class Measurement(object):
         self.forecast = forecast
         self.url = url
         self.radar_image = radar_image
-
-        self.data, self.label_img = self._analyze(self.radar_image._image_data)
+        image_data = self._make_raster(self.radar_image._image_data)
+        self.data, self.label_img = self._analyze(image_data)
 
         # self.position = position
         # self.raster_width = raster_width # 1px is about 850m, raster = 850m*raster_width
@@ -189,55 +189,69 @@ class Measurement(object):
                 return data
         return None
 
+    def _make_raster(self, pixel_array):
+        """
+        Downsamples the image (pixel_array) so that it is =
+         test_field_width/self.raster_width * test_field_width/self.raster_width in size.
+        """
+        # Divide image into a raster
+        # steps = self.test_field_width/self.raster_width
+        #
+        # # create empty pixel (rgb) array
+        # raster_array = [[0, 0, 0] for i in range(steps * steps)]
+        #
+        # # loop through all rasters
+        # for line in range(0, self.test_field_width):
+        #     multiplicator = int(line/self.raster_width)
+        #
+        #     for pixel in range(0, self.test_field_width):
+        #         raster = int(pixel/self.raster_width)
+        #
+        #         raster_no = raster+multiplicator*steps
+        #
+        #         for i in range(0, 3):
+        #             raster_array[raster_no][i] += pixel_array[line*self.test_field_width+pixel][i] #pixel_array[line][pixel]
+        #
+        # # average pixel values
+        # for pixel in raster_array:
+        #     for j in range(0, 3):
+        #         pixel[j] = int(pixel[j]/(self.raster_width*self.raster_width))
+        #
+        # tuple_array = []
+        #
+        # # convert array to tuple
+        # for pixel in raster_array:
+        #     tuple_array.append(tuple(pixel))
+        #
+        # from PIL import Image
+        #
+        # downsampled_image = Image.new("RGB", (steps, steps,))
+        # downsampled_image.putdata(tuple_array)
+        #
+        # if settings.SAVE_IMAGES:
+        #     try:
+        #         downsampled_image.save('%s/%s'%(settings.RADAR_IMAGES, self.image_name))
+        #     except Exception, e:
+        #         print e
+        #         pass
+        # return downsampled_image
+        #todo: do better
 
+        image_array = []
 
-    # def _make_raster(self, pixel_array):
-    #     """
-    #     Downsamples the image (pixel_array) so that it is =
-    #      test_field_width/self.raster_width * test_field_width/self.raster_width in size.
-    #     """
-    #     # Divide image into a raster
-    #     steps = self.test_field_width/self.raster_width
-    #
-    #     # create empty pixel (rgb) array
-    #     raster_array = [[0, 0, 0] for i in range(steps * steps)]
-    #
-    #     # loop through all rasters
-    #     for line in range(0, self.test_field_width):
-    #         multiplicator = int(line/self.raster_width)
-    #
-    #         for pixel in range(0, self.test_field_width):
-    #             raster = int(pixel/self.raster_width)
-    #
-    #             raster_no = raster+multiplicator*steps
-    #
-    #             for i in range(0, 3):
-    #                 raster_array[raster_no][i] += pixel_array[line*self.test_field_width+pixel][i] #pixel_array[line][pixel]
-    #
-    #     # average pixel values
-    #     for pixel in raster_array:
-    #         for j in range(0, 3):
-    #             pixel[j] = int(pixel[j]/(self.raster_width*self.raster_width))
-    #
-    #     tuple_array = []
-    #
-    #     # convert array to tuple
-    #     for pixel in raster_array:
-    #         tuple_array.append(tuple(pixel))
-    #
-    #     from PIL import Image
-    #
-    #     downsampled_image = Image.new("RGB", (steps, steps,))
-    #     downsampled_image.putdata(tuple_array)
-    #
-    #     if settings.SAVE_IMAGES:
-    #         try:
-    #             downsampled_image.save('%s/%s'%(settings.RADAR_IMAGES, self.image_name))
-    #         except Exception, e:
-    #             print e
-    #             pass
-    #
-    #     return downsampled_image
+        #removes alpha channel
+        if len(pixel_array[0][0]) == 4:
+            for row in pixel_array:
+                new_row = []
+                for pixel in row:
+                    if pixel[3] > 127:
+                        new_pixel = [pixel[0], pixel[1], pixel[2]]
+                    else:
+                        new_pixel = [0, 0, 0]
+                    new_row.append(new_pixel)
+                image_array.append(new_row)
+
+        return image_array
 
     def _make_mask(self, data):
         # make array that only indicates regions (ie raincells), so that for a given x and y 1 = rain and 0 = no rain
