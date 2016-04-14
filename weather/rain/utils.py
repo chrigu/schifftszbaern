@@ -165,6 +165,8 @@ def _caclulate_vector(data):
 
     hits = []
     vectors = []
+    avg_vector = None
+
     for history in data:
 
         if settings.DEBUG:
@@ -193,8 +195,9 @@ def _caclulate_vector(data):
             # if hit:
             #     hits.append(hit)
 
-    # todo: calc vectors
-    avg_vector = reduce(lambda x, y: x + y, vectors) / len(vectors)
+    if len(data) != 0:
+        # todo: calc vectors
+        avg_vector = reduce(lambda x, y: x + y, vectors) / len(vectors)
 
     return avg_vector
 

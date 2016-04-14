@@ -12,27 +12,24 @@ from RainPredictor2 import RainPredictor2
 from AmbientDataFetcher import AmbientDataFetcher
 from utils import get_timestring, calculate_movement
 
-def get_rain_info(test_field_size, no_samples):
+
+def get_rain_info(x, y, test_field_size, no_samples):
 
         # get date
         data_queue = []
         now = datetime.now()
+        next_hit = None
         latest_radar = now - timedelta(0, 10*60)     # radar has a 8minute-ish delay, so go 10minutes back in time
 
         # get data from srf.ch up to now
-        for minutes in range(0, no_samples):
+        for minutes in range(0, no_samples+1):
             timestamp = build_timestamp(latest_radar - timedelta(0, 60*5*minutes))
 
             # try:
             # todo catch error
-            # image_data, image_name = get_radar_image(timestamp=timestamp)
-            # measurement = Measurement2((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, self.test_field_size,
-            #                            image_data, image_name)
-            # measurement.analyze_image()
-            radar_image = RadarImage((settings.X_LOCATION-52, settings.Y_LOCATION-52, settings.X_LOCATION+52, settings.Y_LOCATION+52), timestamp=timestamp)
-            # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, url.split("/")[:-1])
-            #
-            # measurement.analyze_image()
+
+            radar_image = RadarImage((x-52, y-52, x+52, y+52), timestamp=timestamp)
+
             measurement = Measurement(radar_image, timestamp)
             #todo: rename .location
             if not measurement.location:
@@ -54,14 +51,15 @@ def get_rain_info(test_field_size, no_samples):
                 print measurement.location
 
         current_data = data_queue[0]
-        # rp = RainPredictor2(data_queue, current_data.timestamp, 52)
-        # vector = rp.calculate_movement()
+
         vector = calculate_movement(data_queue, current_data.timestamp, 52)
-        next_hit = extrapolate_rain(vector, data_queue[0], test_field_size)
-        if next_hit:
-            print "hit in %s, size %s, intensity %s" % (next_hit['time_delta'], next_hit['size'], next_hit['intensity'])
-        else:
-            print "no hit"
+
+        if vector != None:
+            next_hit = extrapolate_rain(vector, data_queue[0], test_field_size)
+            if next_hit:
+                print "hit in %s, size %s, intensity %s" % (next_hit['time_delta'], next_hit['size'], next_hit['intensity'])
+            else:
+                print "no hit"
 
         return current_data, next_hit
 

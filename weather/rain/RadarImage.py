@@ -51,4 +51,3 @@ class RadarImage(object):
             # use local files. Mainly for testing
 
         return url, image_name
-

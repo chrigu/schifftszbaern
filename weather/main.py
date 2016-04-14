@@ -14,6 +14,7 @@ import json
 import requests
 from datetime import datetime, timedelta
 import copy
+from rain import get_rain_info
 
 
 # FIXME: move parts to own module/class
@@ -44,36 +45,45 @@ def schiffts():
     for minutes in range(0, settings.NO_SAMPLES+3):
         timestamp = build_timestamp(latest_radar - timedelta(0, 60*5*minutes))
         # try to retrieve a measurement for the timestamp from the old data queue
-        old_measurement = next((item for item in old_data_queue if item.timestamp == timestamp), None)
+        # old_measurement = next((item for item in old_data_queue if item.timestamp == timestamp), None)
+        #
+        # # get a new measurement from srf.ch if it wasn't found in the old data queue
+        # if not old_measurement:
+        #     # try:
+        #         measurement, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
+        #         # measurement = Measurement((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, 105)
+        #         data_queue.append(measurement)
+        #         if settings.DEBUG:
+        #             print "add sample with timestamp %s"%timestamp
+        #
+        #         if minutes == 0:
+        #             current_data = measurement
+        #             last_update = timestamp
+        #
+        #     # except Exception, e:
+        #     #     print "fail in queuefiller: %s" % e
+        #
+        # # use old data
+        # else:
+        #     if settings.DEBUG:
+        #         print "%s already in queue" % timestamp
+        #
+        #     if minutes == 0:
+        #         current_data = old_measurement
+        #         last_update = timestamp
+        #
+        #     data_queue.append(old_measurement)
+        #
+        # if len(data_queue) == settings.NO_SAMPLES:
+        #     break
 
-        # get a new measurement from srf.ch if it wasn't found in the old data queue
-        if not old_measurement:
-            # try:
-                measurement = Measurement((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, 105)
-                data_queue.append(measurement)
-                if settings.DEBUG:
-                    print "add sample with timestamp %s"%timestamp
+    timestamp = build_timestamp(latest_radar - timedelta(0, 60 * 5 * minutes))
+    measurement, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
 
-                if minutes == 0:
-                    current_data = measurement
-                    last_update = timestamp
+    if measurement:
+        data_queue.append(measurement)
 
-            # except Exception, e:
-            #     print "fail in queuefiller: %s" % e
-
-        # use old data
-        else:
-            if settings.DEBUG:
-                print "%s already in queue" % timestamp
-
-            if minutes == 0:
-                current_data = old_measurement
-                last_update = timestamp
-
-            data_queue.append(old_measurement)
-
-        if len(data_queue) == settings.NO_SAMPLES:
-            break
+    current_data = data_queue[0].rain_at_position(52, 52)
 
     queue_to_save = copy.deepcopy(data_queue)
 
@@ -89,7 +99,7 @@ def schiffts():
         last_dry = current_data.timestamp
         last_rain = old_last_rain
 
-        next_hit = get_prediction_data(current_data, data_queue, old_data, settings.TWEET_PREDICTION)
+        # next_hit = get_prediction_data(current_data, data_queue, old_data, settings.TWEET_PREDICTION)
 
     if settings.DEBUG:
         print "raining now: %s, raining before: %s" % (rain_now, old_rain)
@@ -137,5 +147,7 @@ def schiffts():
 
 if __name__ == '__main__':
     # schiffts()
-    from rain import get_rain_info
-    print get_rain_info(105, settings.NO_SAMPLES)
+
+    measurement, hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
+    print hit
+    print measurement.rain_at_position(52, 52)

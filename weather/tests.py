@@ -91,17 +91,20 @@ class PredictionTests(unittest.TestCase):
         vector = calculate_movement(new_queue, current_data.timestamp, 52)
         #todo: fix .data on data obj. shouldn't be an obj
         # time_to_hit, data = new_queue[0].calc_matrix(vector)
-        next_hit = extrapolate_rain(vector, new_queue[0], 105)
-        print "hits %s, %s" % (next_hit['time_delta'], next_hit)
-        self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5) * 60 and next_hit['time_delta'] <= (minutes_to_hit + 0.5) * 60)
+        if not vector == None:
+            next_hit = extrapolate_rain(vector, new_queue[0], 105)
+            print "hits %s, %s" % (next_hit['time_delta'], next_hit)
+            self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5) * 60 and next_hit['time_delta'] <= (minutes_to_hit + 0.5) * 60)
 
-        try:
-            delta, size, time, hit_factor, intensity = predictor.make_forecast()
+            try:
+                delta, size, time, hit_factor, intensity = predictor.make_forecast()
 
-            print "test: %s - time: %s (delta %s), hit_factor: %s"%(minutes_to_hit, time, delta/60, hit_factor)
-        except Exception, e:
-            print e
-            pass
+                print "test: %s - time: %s (delta %s), hit_factor: %s"%(minutes_to_hit, time, delta/60, hit_factor)
+            except Exception, e:
+                print e
+                pass
+
+        self.fail("no hit")
 
             # self.assertTrue(delta >= (minutes_to_hit-0.5)*60 and delta <= (minutes_to_hit+0.5)*60)
             # #as the time to the impact (delta) is calculated when predictor.make_forecast() is run, the result from
@@ -114,122 +117,122 @@ class PredictionTests(unittest.TestCase):
             # self.assertEqual(datetime.strftime(time, "%H%M"), next_hit['time'])
 
 
-# class ImageAnalyzisTest(unittest.TestCase):
-#
-#     def setUp(self):
-#         self.start_time = datetime.now()
-#
-#     def test_rain_1mm(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_rain_1mm.png'}
-#
-#         self._test_image(test_image, 0)
-#
-#     def test_rain_3mm(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_rain_3mm.png'}
-#
-#         self._test_image(test_image, 1)
-#
-#     def test_rain_10mm(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_rain_10mm.png'}
-#
-#         self._test_image(test_image, 2)
-#
-#     def test_rain_30mm(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_rain_30mm.png'}
-#
-#         self._test_image(test_image, 3)
-#
-#     def test_rain_100mm(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_rain_100mm.png'}
-#
-#         self._test_image(test_image, 4)
-#
-#     def test_rain_gt_100mm(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_rain_gt_100mm.png'}
-#
-#         self._test_image(test_image, 5)
-#
-#     def test_snow_flakes(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_snow_flakes.png'}
-#
-#         self._test_image(test_image, 10)
-#
-#     def test_snow_weak(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_snow_weak.png'}
-#
-#         self._test_image(test_image, 11)
-#
-#     def test_snow_moderate(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_snow_moderate.png'}
-#
-#         self._test_image(test_image, 12)
-#
-#     def test_snow_strong(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_snow_strong.png'}
-#
-#         self._test_image(test_image, 13)
-#
-#     def test_snow_heavy(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_snow_heavy.png'}
-#
-#         self._test_image(test_image, 14)
-#
-#     def test_snow_very_heavy(self):
-#         test_image = {'timestamp': self.start_time, 'image': 'test_snow_very_heavy.png'}
-#
-#         self._test_image(test_image, 15)
-#
-#     def _test_image(self, test_image, intensity):
-#         url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
-#         # radar_image = get_radar_image((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
-#         radar_image = RadarImage((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
-#         # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, image_name)
-#         # measurement = analyze_image_for_rain(radar_image, self.start_time)
-#         measurement = Measurement(radar_image, self.start_time)
-#
-#         # current_data = measurement.rain_at_position(X_LOCATION, Y_LOCATION)
-#         current_data = measurement.rain_at_position(52, 52)
-#         self.assertEqual(current_data['intensity'], intensity)
-#
-#     def test_blankRadar(self):
-#         url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), 'blank_test.png')
-#         radar_image = RadarImage((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
-#         # measurement = Measurement2((X_LOCATION, Y_LOCATION), self.start_time, 1, 105, data, image_name)
-#         # measurement = analyze_image_for_rain(radar_image, self.start_time)
-#         measurement = Measurement(radar_image, self.start_time)
-#         # measurement.analyze_image()
-#         self.assertEqual(measurement.location, {})
-#
-#
-# class WeatherTests(unittest.TestCase):
-#
-#     def test_no_snow_intentsity(self):
-#         intensity = 4
-#         temperature_data = {'status': 200, 'temperature': '-3'}
-#
-#         snow = does_it_snow(intensity, temperature_data)
-#         self.assertFalse(snow)
-#
-#     def test_no_snow_status(self):
-#         intensity = 10
-#         temperature_data = {'status': 400, 'temperature': '-3'}
-#
-#         snow = does_it_snow(intensity, temperature_data)
-#         self.assertFalse(snow)
-#
-#     def test_no_snow_temperature(self):
-#         intensity = 10
-#         temperature_data = {'status': 200, 'temperature': '2'}
-#
-#         snow = does_it_snow(intensity, temperature_data)
-#         self.assertFalse(snow)
-#
-#     def test_snow(self):
-#         intensity = 10
-#         temperature_data = {'status': 200, 'temperature': '0'}
-#
-#         snow = does_it_snow(intensity, temperature_data)
-#         self.assertTrue(snow)
+class ImageAnalyzisTest(unittest.TestCase):
+
+    def setUp(self):
+        self.start_time = datetime.now()
+
+    def test_rain_1mm(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_rain_1mm.png'}
+
+        self._test_image(test_image, 0)
+
+    def test_rain_3mm(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_rain_3mm.png'}
+
+        self._test_image(test_image, 1)
+
+    def test_rain_10mm(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_rain_10mm.png'}
+
+        self._test_image(test_image, 2)
+
+    def test_rain_30mm(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_rain_30mm.png'}
+
+        self._test_image(test_image, 3)
+
+    def test_rain_100mm(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_rain_100mm.png'}
+
+        self._test_image(test_image, 4)
+
+    def test_rain_gt_100mm(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_rain_gt_100mm.png'}
+
+        self._test_image(test_image, 5)
+
+    def test_snow_flakes(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_snow_flakes.png'}
+
+        self._test_image(test_image, 10)
+
+    def test_snow_weak(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_snow_weak.png'}
+
+        self._test_image(test_image, 11)
+
+    def test_snow_moderate(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_snow_moderate.png'}
+
+        self._test_image(test_image, 12)
+
+    def test_snow_strong(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_snow_strong.png'}
+
+        self._test_image(test_image, 13)
+
+    def test_snow_heavy(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_snow_heavy.png'}
+
+        self._test_image(test_image, 14)
+
+    def test_snow_very_heavy(self):
+        test_image = {'timestamp': self.start_time, 'image': 'test_snow_very_heavy.png'}
+
+        self._test_image(test_image, 15)
+
+    def _test_image(self, test_image, intensity):
+        url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
+        # radar_image = get_radar_image((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
+        radar_image = RadarImage((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
+        # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, image_name)
+        # measurement = analyze_image_for_rain(radar_image, self.start_time)
+        measurement = Measurement(radar_image, self.start_time)
+
+        # current_data = measurement.rain_at_position(X_LOCATION, Y_LOCATION)
+        current_data = measurement.rain_at_position(52, 52)
+        self.assertEqual(current_data['intensity'], intensity)
+
+    def test_blankRadar(self):
+        url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), 'blank_test.png')
+        radar_image = RadarImage((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
+        # measurement = Measurement2((X_LOCATION, Y_LOCATION), self.start_time, 1, 105, data, image_name)
+        # measurement = analyze_image_for_rain(radar_image, self.start_time)
+        measurement = Measurement(radar_image, self.start_time)
+        # measurement.analyze_image()
+        self.assertEqual(measurement.location, {})
+
+
+class WeatherTests(unittest.TestCase):
+
+    def test_no_snow_intentsity(self):
+        intensity = 4
+        temperature_data = {'status': 200, 'temperature': '-3'}
+
+        snow = does_it_snow(intensity, temperature_data)
+        self.assertFalse(snow)
+
+    def test_no_snow_status(self):
+        intensity = 10
+        temperature_data = {'status': 400, 'temperature': '-3'}
+
+        snow = does_it_snow(intensity, temperature_data)
+        self.assertFalse(snow)
+
+    def test_no_snow_temperature(self):
+        intensity = 10
+        temperature_data = {'status': 200, 'temperature': '2'}
+
+        snow = does_it_snow(intensity, temperature_data)
+        self.assertFalse(snow)
+
+    def test_snow(self):
+        intensity = 10
+        temperature_data = {'status': 200, 'temperature': '0'}
+
+        snow = does_it_snow(intensity, temperature_data)
+        self.assertTrue(snow)
 
 if __name__ == '__main__':
     unittest.main()
