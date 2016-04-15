@@ -41,58 +41,23 @@ def schiffts():
 
     old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather = storage.load_data()
 
-    # get data from srf.ch up to now
-    for minutes in range(0, settings.NO_SAMPLES+3):
-        timestamp = build_timestamp(latest_radar - timedelta(0, 60*5*minutes))
-        # try to retrieve a measurement for the timestamp from the old data queue
-        # old_measurement = next((item for item in old_data_queue if item.timestamp == timestamp), None)
-        #
-        # # get a new measurement from srf.ch if it wasn't found in the old data queue
-        # if not old_measurement:
-        #     # try:
-        #         measurement, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
-        #         # measurement = Measurement((settings.X_LOCATION, settings.Y_LOCATION), timestamp, 1, 105)
-        #         data_queue.append(measurement)
-        #         if settings.DEBUG:
-        #             print "add sample with timestamp %s"%timestamp
-        #
-        #         if minutes == 0:
-        #             current_data = measurement
-        #             last_update = timestamp
-        #
-        #     # except Exception, e:
-        #     #     print "fail in queuefiller: %s" % e
-        #
-        # # use old data
-        # else:
-        #     if settings.DEBUG:
-        #         print "%s already in queue" % timestamp
-        #
-        #     if minutes == 0:
-        #         current_data = old_measurement
-        #         last_update = timestamp
-        #
-        #     data_queue.append(old_measurement)
-        #
-        # if len(data_queue) == settings.NO_SAMPLES:
-        #     break
-
-    timestamp = build_timestamp(latest_radar - timedelta(0, 60 * 5 * minutes))
     measurement, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
 
     if measurement:
         data_queue.append(measurement)
 
-    current_data = data_queue[0].rain_at_position(52, 52)
+    current_data = data_queue[0]
+    current_data_at_position = current_data.rain_at_position(52, 52)
+    timestamp = current_data.timestamp
 
     queue_to_save = copy.deepcopy(data_queue)
 
     # only calculate next rain if it is currently not raining at the current location
-    if does_it_rain(current_data):
+    if does_it_rain(current_data_at_position):
         rain_now = True
         last_rain = current_data.timestamp
         last_dry = old_last_dry
-        intensity = current_data.location['intensity']
+        intensity = current_data_at_position['intensity']
 
     else:
         rain_now = False
@@ -127,11 +92,11 @@ def schiffts():
         snow_update = snow or old_snow
         tweet_status(rain_now, snow_update)
 
-    storage.save_data(last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity, snow,
+    storage.save_data(timestamp, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity, snow,
                       location_weather)
 
     # make data
-    data_to_send = {'prediction': next_hit, 'current_data': current_data.location, 'temperature': temperature_data,
+    data_to_send = {'prediction': next_hit, 'current_data': current_data_at_position, 'temperature': temperature_data,
                     'snow': snow, 'current_weather': location_weather}
 
     # send data to server
@@ -146,8 +111,8 @@ def schiffts():
         print e
 
 if __name__ == '__main__':
-    # schiffts()
+    schiffts()
 
-    measurement, hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
-    print hit
-    print measurement.rain_at_position(52, 52)
+    # measurement, hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
+    # print hit
+    # print measurement.rain_at_position(52, 52)

@@ -73,7 +73,8 @@ class Measurement(object):
     def timestring_to_timestamp(timestring):
         return datetime.strptime(str(timestring), settings.DATE_FORMAT)
 
-    # def __init__(self, position, timestamp, raster_width, test_field_width, image_data, image_name, forecast=False, url=None):
+    # def __init__(self, position, timestamp, raster_width, test_field_width, image_data, image_name,
+    #       forecast=False, url=None):
     def __init__(self, radar_image, timestamp, forecast=False, url=None):
 
         self.forecast = forecast
@@ -142,7 +143,7 @@ class Measurement(object):
                     rgb_values[i] += pixel[i]
 
         max_value = max(pixels, key=tuple)
-        return self._get_intensity(max_value) or {}
+        return self._get_intensity(max_value) or None
 
     def _get_intensity(self, rgb_vector):
         """

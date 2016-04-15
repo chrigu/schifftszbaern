@@ -29,24 +29,24 @@ class DataStorage(object):
 
             old_data = json.loads(f.read())
             #check if old data was saved, if yes create measurement objects and add them to a queue
-            if old_data.has_key('queue'):
-                for old_values in old_data['queue']:
-                    measurement = Measurement.from_json((settings.X_LOCATION, settings.Y_LOCATION), 3, 105, old_values)
-                    if measurement:
-                        old_data_queue.append(measurement)
+            # if 'queue' in old_data:
+            #     for old_values in old_data['queue']:
+            #         measurement = Measurement.from_json((settings.X_LOCATION, settings.Y_LOCATION), 3, 105, old_values)
+            #         if measurement:
+            #             old_data_queue.append(measurement)
 
             #get the rest of the old data (last time of no-/rain, etc.)
-            if old_data.has_key('last_sample_rain'):
+            if 'last_sample_rain' in old_data:
                 old_rain = old_data['last_sample_rain']
-            if old_data.has_key('last_rain') and old_data['last_rain']:
+            if 'last_rain' in old_data and old_data['last_rain']:
                 old_last_rain = datetime.strptime(old_data['last_rain'],settings.DATE_FORMAT)
-            if old_data.has_key('last_dry') and old_data['last_dry']:
+            if 'last_dry' in old_data and old_data['last_dry']:
                 old_last_dry = datetime.strptime(old_data['last_dry'],settings.DATE_FORMAT)
             # if old_data.has_key('next_hit'):
             #     old_next_hit = datetime.strptime(old_data['old_next_hit'],settings.DATE_FORMAT)
-            if old_data.has_key('last_sample_snow'):
+            if 'last_sample_snow' in old_data:
                 old_snow = old_data['last_sample_snow']
-            if old_data.has_key('location_weather_data'):
+            if 'location_weather_data' in old_data:
                 old_weather_data = old_data['location_weather_data']
 
         except Exception, e:
@@ -76,8 +76,10 @@ class DataStorage(object):
                 last_rain_string = None
 
             #save data to file
-            save_data = {'last_update':datetime.strftime(last_update, settings.DATE_FORMAT), 'queue':queue_to_save, 'last_sample_rain':rain_now, 'last_dry':last_dry_string, \
-                        'last_rain':last_rain_string, 'next_hit':next_hit, 'intensity':intensity, 'last_sample_snow':snow, 'location_weather_data':location_weather_data}
+            save_data = {'last_update': datetime.strftime(last_update, settings.DATE_FORMAT), 'queue': queue_to_save,
+                         'last_sample_rain': rain_now, 'last_dry': last_dry_string,
+                        'last_rain': last_rain_string, 'next_hit': next_hit, 'intensity': intensity,
+                         'last_sample_snow': snow, 'location_weather_data': location_weather_data}
 
             with open(self.filename, 'w') as outfile:
                 json.dump(save_data, outfile, default=self.encode)

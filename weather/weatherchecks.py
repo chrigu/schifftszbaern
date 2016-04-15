@@ -6,7 +6,7 @@ def does_it_rain(current_data):
     '''
     check for rain, True if intensity is in dict
     '''
-    if current_data and current_data.location and current_data.location.has_key('intensity'):
+    if current_data and 'intensity' in current_data:
         return True
     else:
         return False

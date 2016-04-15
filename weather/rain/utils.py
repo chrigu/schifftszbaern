@@ -79,6 +79,8 @@ def extrapolate_rain(vector, sample, test_field_size):
                     label_count += 1
                     labels.append(img[x][y])
 
+        print "%s, %s" % (label_count, index*5)
+
         if label_count > 5:
             label = Counter(labels).keys()[0]
 

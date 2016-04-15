@@ -21,15 +21,15 @@ class PredictionTests(unittest.TestCase):
     def setUp(self):
         self.start_time = datetime.now()
 
-    def test_16min(self):
-        test_images = [{'timestamp': self.start_time, 'image': 'test_16min_6.png'},
-                        {'timestamp': self.start_time-timedelta(0, 60*5), 'image': 'test_16min_5.png'}]
+    def test_25min(self):
+        test_images = [{'timestamp': self.start_time, 'image': 'test_25min_6.png'},
+                        {'timestamp': self.start_time-timedelta(0, 60*5), 'image': 'test_25min_5.png'}]
                         # {'timestamp':self.start_time-timedelta(0,60*10), 'image':'test_20min_4.png'},
                         # {'timestamp':self.start_time-timedelta(0,60*15), 'image':'test_20min_3.png'},
                         # {'timestamp':self.start_time-timedelta(0,60*20), 'image':'test_20min_2.png'},
                         # {'timestamp':self.start_time-timedelta(0,60*25), 'image':'test_20min_1.png'}]
 
-        self._test_images(test_images, 20)
+        self._test_images(test_images, 25)
 
     def test_40min(self):
         test_images = [{'timestamp': self.start_time, 'image': 'test_40min_6.png'},
@@ -94,7 +94,8 @@ class PredictionTests(unittest.TestCase):
         if not vector == None:
             next_hit = extrapolate_rain(vector, new_queue[0], 105)
             print "hits %s, %s" % (next_hit['time_delta'], next_hit)
-            self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5) * 60 and next_hit['time_delta'] <= (minutes_to_hit + 0.5) * 60)
+            # self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5) * 60 and next_hit['time_delta'] <= (minutes_to_hit + 0.5) * 60)
+            self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5)  and next_hit['time_delta'] <= (minutes_to_hit + 0.5))
 
             try:
                 delta, size, time, hit_factor, intensity = predictor.make_forecast()
@@ -103,8 +104,8 @@ class PredictionTests(unittest.TestCase):
             except Exception, e:
                 print e
                 pass
-
-        self.fail("no hit")
+        else:
+            self.fail("no hit")
 
             # self.assertTrue(delta >= (minutes_to_hit-0.5)*60 and delta <= (minutes_to_hit+0.5)*60)
             # #as the time to the impact (delta) is calculated when predictor.make_forecast() is run, the result from

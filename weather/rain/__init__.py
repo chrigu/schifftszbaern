@@ -22,7 +22,7 @@ def get_rain_info(x, y, test_field_size, no_samples):
         latest_radar = now - timedelta(0, 10*60)     # radar has a 8minute-ish delay, so go 10minutes back in time
 
         # get data from srf.ch up to now
-        for minutes in range(0, no_samples+1):
+        for minutes in range(0, no_samples+2):
             timestamp = build_timestamp(latest_radar - timedelta(0, 60*5*minutes))
 
             # try:
@@ -51,15 +51,18 @@ def get_rain_info(x, y, test_field_size, no_samples):
                 print measurement.location
 
         current_data = data_queue[0]
+        current_data_at_position = current_data.rain_at_position(52, 52)
 
-        vector = calculate_movement(data_queue, current_data.timestamp, 52)
+        if not current_data_at_position:
 
-        if vector != None:
-            next_hit = extrapolate_rain(vector, data_queue[0], test_field_size)
-            if next_hit:
-                print "hit in %s, size %s, intensity %s" % (next_hit['time_delta'], next_hit['size'], next_hit['intensity'])
-            else:
-                print "no hit"
+            vector = calculate_movement(data_queue, current_data.timestamp, 52)
+
+            if vector != None:
+                next_hit = extrapolate_rain(vector, data_queue[0], test_field_size)
+                if next_hit:
+                    print "hit in %s, size %s, intensity %s" % (next_hit['time_delta'], next_hit['size'], next_hit['intensity'])
+                else:
+                    print "no hit"
 
         return current_data, next_hit
 
