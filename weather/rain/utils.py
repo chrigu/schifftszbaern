@@ -61,7 +61,6 @@ def extrapolate_rain(vector, sample, test_field_size):
 
     next_hit = None
 
-    png_writer = png.Writer(width=test_field_size, height=test_field_size, greyscale=True)
     for index in range(1, 15):
 
         label_count = 0
@@ -71,7 +70,8 @@ def extrapolate_rain(vector, sample, test_field_size):
         rounded_vector = map(lambda x: round(x * index), vector)  # todo: test
         img = ndimage.shift(sample.label_img, rounded_vector, mode='nearest')
         label = img[int(test_field_size / 2)][int(test_field_size / 2)]  # todo: test area not point
-        # png_writer.write(open("testshift%s_%s.png" % (label, index), 'wb'), img*10)
+        png_writer = png.Writer(width=104, height=104, greyscale=True)
+        png_writer.write(open("testshift%s_%s.png" % (label, index), 'wb'), img*5)
 
         for x in range((test_field_size / 2) - 1, (test_field_size / 2) + 2):
             for y in range((test_field_size / 2) - 1, (test_field_size / 2) + 2):
@@ -79,7 +79,7 @@ def extrapolate_rain(vector, sample, test_field_size):
                     label_count += 1
                     labels.append(img[x][y])
 
-        print "%s, %s" % (label_count, index*5)
+        print "%s, %s, %s" % (label_count, index*5, map(lambda x: x * index, vector))
 
         if label_count > 5:
             label = Counter(labels).keys()[0]

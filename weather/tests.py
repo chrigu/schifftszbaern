@@ -97,13 +97,13 @@ class PredictionTests(unittest.TestCase):
             # self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5) * 60 and next_hit['time_delta'] <= (minutes_to_hit + 0.5) * 60)
             self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5)  and next_hit['time_delta'] <= (minutes_to_hit + 0.5))
 
-            try:
-                delta, size, time, hit_factor, intensity = predictor.make_forecast()
-
-                print "test: %s - time: %s (delta %s), hit_factor: %s"%(minutes_to_hit, time, delta/60, hit_factor)
-            except Exception, e:
-                print e
-                pass
+            # try:
+            #     delta, size, time, hit_factor, intensity = predictor.make_forecast()
+            #
+            #     print "test: %s - time: %s (delta %s), hit_factor: %s"%(minutes_to_hit, time, delta/60, hit_factor)
+            # except Exception, e:
+            #     print e
+            #     pass
         else:
             self.fail("no hit")
 

@@ -86,27 +86,6 @@ class Measurement(object):
         image_data = self._make_raster(self.radar_image._image_data)
         self.data, self.label_img = self._analyze(image_data)
 
-        # self.position = position
-        # self.raster_width = raster_width # 1px is about 850m, raster = 850m*raster_width
-        # self.test_field_width = test_field_width
-        # self.forecast = forecast
-        # self.location = None
-        #
-        # self.has_alpha = False
-        # self.palette = None
-        # self.data = []
-        # self.timestamp = timestamp
-        # self.img_data = None
-        # self.image = None
-        # self.image_name = image_name
-        #
-        # if 'palette' in image_data[3]:
-        #     self.palette = image_data[3]['palette']
-        #
-        # self.width = image_data[0]
-        # self.height = image_data[1]
-        # self.image_data = list(image_data[2])
-        # self.has_alpha = image_data[3]['alpha']
 
     def __str__(self):
         return self.timestamp
