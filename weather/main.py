@@ -67,11 +67,10 @@ def schiffts():
         # next_hit = get_prediction_data(current_data, data_queue, old_data, settings.TWEET_PREDICTION)
 
         if next_hit and settings.TWEET_PREDICTION:
-            from schifftszbaern.utils import send_tweet
+            from rain.utils import send_tweet
             try:
                 # don't send prediction if there's an old next hit value
-                if (((old_data.has_key('next_hit') and not old_data['next_hit']) or
-                         (not old_data.has_key('next_hit'))) and next_hit['time'] and hit_factor > 1.2):
+                if (((old_data.has_key('next_hit') and not old_data['next_hit']))):
                     send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s" % (next_hit['time'], next_hit['time_delta'],
                                                                     next_hit['size'], next_hit['hit_factor'],
                                                                     next_hit['intensity']))
