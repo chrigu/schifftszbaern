@@ -180,6 +180,8 @@ Some basic tests can be run from the weather directory. You can run `python test
 * Documentation (obviously)
 * 1 config file for everything
 * remove magic numbers
+* import settings only in main
+* clean up utils
 * Clean up SVG classes & attributes
 * add a night class (no sun at night)
 * use scss

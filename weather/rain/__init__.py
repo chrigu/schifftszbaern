@@ -64,7 +64,7 @@ def get_rain_info(x, y, test_field_size, no_samples):
                 else:
                     print "no hit"
 
-        return current_data, next_hit
+        return data_queue, next_hit
 
 
 def build_timestamp(time, forecast=False):

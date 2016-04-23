@@ -279,9 +279,7 @@ def _caclulate_vector(data):
         # get average movement
         coms = np_array(
             map(lambda sample: sample['movement'], history[1:settings.NO_SAMPLES]))  # FIXME: movement in wrong sample
-        print coms
         mean = coms.mean(axis=0)
-        print mean
         vectors.append(mean)
 
         # get last position
@@ -302,9 +300,11 @@ def _caclulate_vector(data):
             #     hits.append(hit)
 
     abs_values = map(lambda vector: linalg.norm(vector, ord=1), vectors)
-    print max(abs_values)
-    index = abs_values.index(max(abs_values))
-    return  vectors[index]
+    if len(abs_values) > 0:
+        index = abs_values.index(max(abs_values))
+        return vectors[index]
+    else:
+        return None
     # if len(data) != 0:
     #     # todo: calc vectors
     #     avg_vector = reduce(lambda x, y: x + y, vectors) / len(vectors)

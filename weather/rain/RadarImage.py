@@ -6,6 +6,7 @@ import cStringIO
 import urllib
 from rain.utils import get_timestring
 
+
 class RadarImage(object):
     def __init__(self, crop_coords, url=None, timestamp=None, forecast=None):
 

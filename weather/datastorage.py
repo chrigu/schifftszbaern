@@ -99,7 +99,11 @@ class DataStorage(object):
         FIXME: Move elsewhere
         """   
         if isinstance(obj, Measurement):
-            return {'data':obj.data, 'timestamp':datetime.strftime(obj.timestamp, settings.DATE_FORMAT)}
+            # return {'data': obj.data, 'timestamp': datetime.strftime(obj.timestamp, settings.DATE_FORMAT)}
+            try:
+                return obj.to_dict()
+            except Exception, e:
+                print e
         return obj
 
 

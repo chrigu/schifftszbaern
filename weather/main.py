@@ -22,8 +22,6 @@ def schiffts():
     # some initialization
     old_data = {}
     data_queue = []
-    current_data = None
-    next_hit = {}
     last_update = ''
 
     intensity = 0
@@ -41,27 +39,24 @@ def schiffts():
 
     old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather = storage.load_data()
 
-    measurement, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
+    measurements, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
+    current_measurement = measurements[0]
 
-    if measurement:
-        data_queue.append(measurement)
+    current_data_at_position = current_measurement.rain_at_position(52, 52)
+    timestamp = current_measurement.timestamp
 
-    current_data = data_queue[0]
-    current_data_at_position = current_data.rain_at_position(52, 52)
-    timestamp = current_data.timestamp
-
-    queue_to_save = copy.deepcopy(data_queue)
+    queue_to_save = copy.deepcopy(measurements)
 
     # only calculate next rain if it is currently not raining at the current location
     if does_it_rain(current_data_at_position):
         rain_now = True
-        last_rain = current_data.timestamp
+        last_rain = current_measurement.timestamp
         last_dry = old_last_dry
         intensity = current_data_at_position['intensity']
 
     else:
         rain_now = False
-        last_dry = current_data.timestamp
+        last_dry = current_measurement.timestamp
         last_rain = old_last_rain
 
         # next_hit = get_prediction_data(current_data, data_queue, old_data, settings.TWEET_PREDICTION)
@@ -90,7 +85,7 @@ def schiffts():
 
     # get current weather from smn (only if the latest value is older than 30min)
     if old_location_weather != {} and 'timestamp' in old_location_weather:
-        if now - datetime.strptime(str(old_location_weather['timestamp']), settings.DATE_FORMAT) > timedelta(0,60*30):
+        if now - datetime.strptime(str(old_location_weather['timestamp']), settings.DATE_FORMAT) > timedelta(0, 60*30):
             location_weather = AmbientDataFetcher.get_weather(settings.SMN_CODE)
         else:
             location_weather = old_location_weather
@@ -116,7 +111,7 @@ def schiffts():
     # encoder.FLOAT_REPR = lambda o: format(o, '.2f')
     payload = {'secret': settings.SECRET, 'data': json.dumps(data_to_send)}
     if settings.DEBUG:
-        print "data for server: %s"%payload
+        print "data for server: %s" % payload
     try:
         r = requests.post(settings.SERVER_URL, data=payload)
         print r.text

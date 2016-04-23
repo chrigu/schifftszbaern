@@ -61,8 +61,10 @@ class Measurement(object):
 
     @classmethod
     def from_json(cls, position, raster_width, test_field_width, data):
+        #todo: use setters
         obj = cls(position, Measurement.timestring_to_timestamp(data['timestamp']), raster_width, test_field_width)
         obj.data = data['data']
+        obj.radar_image = data['radar_image']
         if 'location' in data:
             obj.location = data['location']
         else:
@@ -86,24 +88,25 @@ class Measurement(object):
         image_data = self._make_raster(self.radar_image._image_data)
         self.data, self.label_img = self._analyze(image_data)
 
-
     def __str__(self):
         return self.timestamp
 
     def __unicode__(self):
         return u"%s" % self.timestamp
 
-    def to_json(self):
+    def to_dict(self):
 
         return_dict = {
-            'position': self.position,
             'queue': self.data,
-            'raster_width': self.raster_width,
-            'test_field_width': self.test_field_width,
-            'location': self.location
+            'location': self.location,
+            'label_img': self.label_img.tolist(),
+            'timestamp': datetime.strftime(self.timestamp, settings.DATE_FORMAT)
         }
 
-        return json.dumps(return_dict)
+        return return_dict
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     def rain_at_position(self, x, y):
         """
@@ -174,47 +177,6 @@ class Measurement(object):
         Downsamples the image (pixel_array) so that it is =
          test_field_width/self.raster_width * test_field_width/self.raster_width in size.
         """
-        # Divide image into a raster
-        # steps = self.test_field_width/self.raster_width
-        #
-        # # create empty pixel (rgb) array
-        # raster_array = [[0, 0, 0] for i in range(steps * steps)]
-        #
-        # # loop through all rasters
-        # for line in range(0, self.test_field_width):
-        #     multiplicator = int(line/self.raster_width)
-        #
-        #     for pixel in range(0, self.test_field_width):
-        #         raster = int(pixel/self.raster_width)
-        #
-        #         raster_no = raster+multiplicator*steps
-        #
-        #         for i in range(0, 3):
-        #             raster_array[raster_no][i] += pixel_array[line*self.test_field_width+pixel][i] #pixel_array[line][pixel]
-        #
-        # # average pixel values
-        # for pixel in raster_array:
-        #     for j in range(0, 3):
-        #         pixel[j] = int(pixel[j]/(self.raster_width*self.raster_width))
-        #
-        # tuple_array = []
-        #
-        # # convert array to tuple
-        # for pixel in raster_array:
-        #     tuple_array.append(tuple(pixel))
-        #
-        # from PIL import Image
-        #
-        # downsampled_image = Image.new("RGB", (steps, steps,))
-        # downsampled_image.putdata(tuple_array)
-        #
-        # if settings.SAVE_IMAGES:
-        #     try:
-        #         downsampled_image.save('%s/%s'%(settings.RADAR_IMAGES, self.image_name))
-        #     except Exception, e:
-        #         print e
-        #         pass
-        # return downsampled_image
         #todo: do better
 
         image_array = []
