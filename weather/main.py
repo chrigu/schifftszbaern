@@ -37,7 +37,7 @@ def schiffts():
     if settings.DEBUG:
         print "current timestamp: %s"%timestamp
 
-    old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather = storage.load_data()
+    old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather, old_next_hit = storage.load_data()
 
     measurements, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
     current_measurement = measurements[0]

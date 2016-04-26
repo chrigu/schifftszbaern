@@ -6,6 +6,7 @@ import png
 
 from utils import extrapolate_rain
 from numpy import array as np_array
+from datastorage import DataStorage
 from Measurement import Measurement
 from RadarImage import RadarImage
 from RainPredictor2 import RainPredictor2
@@ -21,41 +22,60 @@ def get_rain_info(x, y, test_field_size, no_samples):
         next_hit = None
         latest_radar = now - timedelta(0, 10*60)     # radar has a 8minute-ish delay, so go 10minutes back in time
 
+        #todo move settings to main
+        storage = DataStorage(settings.COLLECTOR_DATA_FILE)
+        # load old data
+        old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather, old_next_hit = storage.load_data()
+        #todo move to storage
+        old_data = {
+            'old_rain': old_rain,
+            'old_last_rain': old_last_rain,
+            'old_last_dry': old_last_dry,
+            'old_snow': old_snow,
+            'old_data_queue': old_data_queue,
+            'old_location_weather': old_location_weather,
+            'old_next_hit': old_next_hit
+        }
+
         # get data from srf.ch up to now
         for minutes in range(0, no_samples+2):
             timestamp = build_timestamp(latest_radar - timedelta(0, 60*5*minutes))
 
+            # try to retrieve a measurement for the timestamp from the old data queue
+            measurement = next((item for item in old_data['old_data_queue'] if item.timestamp == timestamp), None)
+
             # try:
             # todo catch error
 
-            radar_image = RadarImage((x-52, y-52, x+52, y+52), timestamp=timestamp)
+            if not measurement:
+                radar_image = RadarImage((x-52, y-52, x+52, y+52), timestamp=timestamp)
+                measurement = Measurement(radar_image, timestamp)
 
-            measurement = Measurement(radar_image, timestamp)
             #todo: rename .location
-            if not measurement.location:
+            # if not measurement.location:
 
-                data_queue.append(measurement)
-                if settings.DEBUG:
-                    print "add sample with timestamp %s" % timestamp
+            data_queue.append(measurement)
+            if settings.DEBUG:
+                print "add sample with timestamp %s" % timestamp
 
-                if minutes == 0:
-                    current_data = measurement
-                    last_update = timestamp
+            if minutes == 0:
+                current_data = measurement
+                last_update = timestamp
 
-                # except Exception, e:
-                #     print "fail in queuefiller: %s" % e
+            # except Exception, e:
+            #     print "fail in queuefiller: %s" % e
 
-                if len(data_queue) == settings.NO_SAMPLES:
-                    break
-            else:
-                print measurement.location
+            if len(data_queue) == settings.NO_SAMPLES:
+                break
+            # else:
+            #     print measurement.location
 
         current_data = data_queue[0]
         current_data_at_position = current_data.rain_at_position(52, 52)
 
         if not current_data_at_position:
 
-            vector = calculate_movement(data_queue, current_data.timestamp, 52)
+            vector, history = calculate_movement(data_queue, current_data.timestamp, 52, old_next_hit=old_next_hit)
 
             if vector != None:
                 next_hit = extrapolate_rain(vector, data_queue[0], test_field_size)

@@ -88,7 +88,7 @@ class PredictionTests(unittest.TestCase):
         # predictor = RainPredictor2(new_queue, current_data.timestamp, 52)
         # vector = predictor.calculate_movement()
 
-        vector = calculate_movement(new_queue, current_data.timestamp, 52)
+        vector, history = calculate_movement(new_queue, current_data.timestamp, 52)
         #todo: fix .data on data obj. shouldn't be an obj
         # time_to_hit, data = new_queue[0].calc_matrix(vector)
         if not vector == None:

@@ -60,15 +60,14 @@ class Measurement(object):
     """
 
     @classmethod
-    def from_json(cls, position, raster_width, test_field_width, data):
+    def from_json(cls, timestamp, queue, location, label_img):
         #todo: use setters
-        obj = cls(position, Measurement.timestring_to_timestamp(data['timestamp']), raster_width, test_field_width)
-        obj.data = data['data']
-        obj.radar_image = data['radar_image']
-        if 'location' in data:
-            obj.location = data['location']
-        else:
-            obj.location = obj.rain_at_position(obj.position[0], obj.position[1])
+        obj = cls(None, Measurement.timestring_to_timestamp(timestamp), data=queue, label_img=np.array(label_img))
+        if location:
+            obj.location = location
+        #FIXME: needed below?
+        # else:
+        #     obj.location = obj.rain_at_position(obj.position[0], obj.position[1])
         return obj
 
     @staticmethod
@@ -77,16 +76,21 @@ class Measurement(object):
 
     # def __init__(self, position, timestamp, raster_width, test_field_width, image_data, image_name,
     #       forecast=False, url=None):
-    def __init__(self, radar_image, timestamp, forecast=False, url=None):
+    def __init__(self, radar_image, timestamp, forecast=False, url=None, data=None, label_img=None):
 
         self.forecast = forecast
+        #todo: still used?
         self.location = None
         self.timestamp = timestamp
         self.forecast = forecast
         self.url = url
         self.radar_image = radar_image
-        image_data = self._make_raster(self.radar_image._image_data)
-        self.data, self.label_img = self._analyze(image_data)
+        if data and label_img:
+            self.data = data
+            self.label_img = label_img
+        else:
+            image_data = self._make_raster(self.radar_image._image_data)
+            self.data, self.label_img = self._analyze(image_data)
 
     def __str__(self):
         return self.timestamp
@@ -112,6 +116,10 @@ class Measurement(object):
         """
         Get rain intensity for position at x, y
         """
+
+        if not self.radar_image:
+            return None
+
         pixels = []
 
         rgb_values = [0, 0, 0]
@@ -160,11 +168,11 @@ class Measurement(object):
         else:
             factor = 3
         if not self.radar_image._has_alpha or (self.radar_image._image_data[pixel_y][pixel_x * factor + 3] > 0):
-            return [self.radar_image._image_data[pixel_y][pixel_x * factor], self.radar_image._image_data[pixel_y][pixel_x * factor + 1],
+            return [self.radar_image._image_data[pixel_y][pixel_x * factor],
+                    self.radar_image._image_data[pixel_y][pixel_x * factor + 1],
                     self.radar_image._image_data[pixel_y][pixel_x * factor + 2]]
         else:
             return [0, 0, 0]
-
 
     def get_data_for_label(self, label):
         for data in self.data:

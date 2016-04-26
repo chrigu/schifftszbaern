@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import settings
-from rain import Measurement
-
 import json
 from datetime import datetime
+from numpy import ndarray
+from rain.Measurement import Measurement
 
 class DataStorage(object):
 
@@ -19,6 +19,7 @@ class DataStorage(object):
         old_rain = False
         old_last_rain = None
         old_last_dry = None
+        old_next_hit = None
         old_snow = False
         old_data_queue = []
         old_weather_data = {}
@@ -26,28 +27,31 @@ class DataStorage(object):
         #try to open the file with the old data
         try:
             f = open(self.filename, 'r')
-
             old_data = json.loads(f.read())
-            #check if old data was saved, if yes create measurement objects and add them to a queue
-            # if 'queue' in old_data:
-            #     for old_values in old_data['queue']:
-            #         measurement = Measurement.from_json((settings.X_LOCATION, settings.Y_LOCATION), 3, 105, old_values)
-            #         if measurement:
-            #             old_data_queue.append(measurement)
+            # check if old data was saved, if yes create measurement objects and add them to a queue
+            if 'queue' in old_data:
+                for old_values in old_data['queue']:
+
+                    measurement = Measurement.from_json(old_values['timestamp'], old_values['queue'],
+                                                        old_values['location'], old_values['label_img'])
+                    if measurement:
+                        old_data_queue.append(measurement)
 
             #get the rest of the old data (last time of no-/rain, etc.)
             if 'last_sample_rain' in old_data:
                 old_rain = old_data['last_sample_rain']
             if 'last_rain' in old_data and old_data['last_rain']:
-                old_last_rain = datetime.strptime(old_data['last_rain'],settings.DATE_FORMAT)
+                old_last_rain = datetime.strptime(old_data['last_rain'], settings.DATE_FORMAT)
             if 'last_dry' in old_data and old_data['last_dry']:
-                old_last_dry = datetime.strptime(old_data['last_dry'],settings.DATE_FORMAT)
-            # if old_data.has_key('next_hit'):
-            #     old_next_hit = datetime.strptime(old_data['old_next_hit'],settings.DATE_FORMAT)
+                old_last_dry = datetime.strptime(old_data['last_dry'], settings.DATE_FORMAT)
+            if old_data.has_key('next_hit'):
+                old_next_hit = datetime.strptime(old_data['old_next_hit'],settings.DATE_FORMAT)
             if 'last_sample_snow' in old_data:
                 old_snow = old_data['last_sample_snow']
             if 'location_weather_data' in old_data:
                 old_weather_data = old_data['location_weather_data']
+            if 'next_hit' in old_data:
+                old_next_hit = old_data['old_next_hit']
 
         except Exception, e:
             if settings.DEBUG:
@@ -59,10 +63,11 @@ class DataStorage(object):
             except:
                 pass
 
-        return old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_weather_data
+        return old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_weather_data, old_next_hit
 
 
-    def save_data(self, last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity, snow, location_weather_data):
+    def save_data(self, last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity,
+                  snow, location_weather_data):
         #save data, convert datetime objects to strings
         try:
             if last_dry:
@@ -97,13 +102,18 @@ class DataStorage(object):
         """
         Encodes the Measurement object so that it can be saved as JSON
         FIXME: Move elsewhere
-        """   
+        """
         if isinstance(obj, Measurement):
             # return {'data': obj.data, 'timestamp': datetime.strftime(obj.timestamp, settings.DATE_FORMAT)}
             try:
                 return obj.to_dict()
             except Exception, e:
                 print e
+        elif isinstance(obj, ndarray):
+            try:
+                return obj.tolist()
+            except Exception, e:
+                return obj
         return obj
 
 

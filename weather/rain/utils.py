@@ -140,6 +140,7 @@ extrem 0/200/255
 
 """
 
+
 def get_timestring(timestamp):
     return datetime.strftime(timestamp, settings.DATE_FORMAT)
 
@@ -194,6 +195,7 @@ def extrapolate_rain(vector, sample, test_field_size):
             next_hit['size'] = int(data['size'])
             # next_hit['time'] = datetime.strftime(impact_time, "%H%M")
             next_hit['intensity'] = data['intensity']
+            next_hit['ancestors'] = data['id']
             print "hit, label %s in %s minutes" % (label, index * 5)
             break
 
@@ -248,7 +250,8 @@ def _add_to_closest_match_to_history(data, newer_values, close_points, new_data)
             closest_match['movement'] = position - np_array(
                 closest_match['center_of_mass'])  # FIXME: add movement to n-1 value
             closest_match['forecast'] = data.forecast
-            closest_match['timestamp'] = data.timestamp
+            #FIXME: this needed below?
+            # closest_match['timestamp'] = data.timestamp
         else:
             # FIXME: change to last pos
             closest_match = {
@@ -257,7 +260,7 @@ def _add_to_closest_match_to_history(data, newer_values, close_points, new_data)
                 'size': 0
             }
             closest_match['forecast'] = data.forecast
-            closest_match['timestamp'] = data.timestamp
+            # closest_match['timestamp'] = data.timestamp
 
         for history in new_data:
             if last_sample in history:
@@ -312,7 +315,7 @@ def _caclulate_vector(data):
     # return avg_vector
 
 
-def calculate_movement(data, last_timestamp, center):
+def calculate_movement(data, last_timestamp, center, old_next_hit=None):
 
     data = sorted(data, key=lambda x: x.timestamp, reverse=True)
     last_timestamp = last_timestamp
@@ -333,9 +336,16 @@ def calculate_movement(data, last_timestamp, center):
             print "error: %s" % e
             continue
 
+
+        """
+        return close points and pass them to the extrapolate_rain method. There use the close_points to find the
+        id's cloud and add the id's to the next_hits ancestors
+        """
+
         close_points = _find_closest_old_cells(data[index], n_1_values)
         _add_to_closest_match_to_history(data[index], n_1_values, close_points, new_data)
 
         n_1_values = data[index].data
 
-    return _caclulate_vector(new_data)
+    # todo: fix parameters
+    return _caclulate_vector(new_data), close_points
