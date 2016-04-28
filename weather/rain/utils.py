@@ -159,7 +159,7 @@ RAIN_INTENSITIES = [{'name': '1mm/h', 'rgb': [0, 150, 255], 'intensity': 0},
                     {'name': 'blank', 'rgb': [9, 46, 69], 'intensity': -1}]
 
 
-def extrapolate_rain(vector, sample, test_field_size):
+def extrapolate_rain(vector, sample, test_field_size, old_hit=None, history=None):
     print "shifting image %s %s" % (vector.tolist(), type(vector))
 
     next_hit = None
@@ -169,6 +169,7 @@ def extrapolate_rain(vector, sample, test_field_size):
         label_count = 0
         labels = []
         label = -1
+        new_ancestor = None
 
         rounded_vector = map(lambda x: round(x * index), vector)  # todo: test
         img = ndimage.shift(sample.label_img, rounded_vector, mode='nearest')
@@ -193,9 +194,32 @@ def extrapolate_rain(vector, sample, test_field_size):
             # no need to be too precise
             next_hit['time_delta'] = int(index * 5)
             next_hit['size'] = int(data['size'])
-            # next_hit['time'] = datetime.strftime(impact_time, "%H%M")
+            next_hit['id'] = data['id']
             next_hit['intensity'] = data['intensity']
-            next_hit['ancestors'] = data['id']
+            if history and old_hit:
+
+                # oh my.....
+                for cells in history:
+                    found_cells = False
+                    for cell in cells:
+                        if cell['id'] == data['id']:
+                            found_cells = True
+                        if found_cells:
+                            try:
+                                old_hit['ancestors'].index(cell['id'])
+                                new_ancestor = cells[0]
+                                break
+                            except ValueError:
+                                pass
+
+
+                print new_ancestor
+
+            if new_ancestor:
+                next_hit['ancestors'] = old_hit['ancestors']
+                next_hit['ancestors'].append(data['id'])
+            else:
+                next_hit['ancestors'] = [data['id']]
             print "hit, label %s in %s minutes" % (label, index * 5)
             break
 
@@ -266,6 +290,8 @@ def _add_to_closest_match_to_history(data, newer_values, close_points, new_data)
             if last_sample in history:
                 history.append(closest_match)
 
+    return new_data
+
 
 def _caclulate_vector(data):
     # Loop through a raincells history (past positions) and calculate the movement for the next 50min
@@ -315,7 +341,7 @@ def _caclulate_vector(data):
     # return avg_vector
 
 
-def calculate_movement(data, last_timestamp, center, old_next_hit=None):
+def calculate_movement(data, last_timestamp, center):
 
     data = sorted(data, key=lambda x: x.timestamp, reverse=True)
     last_timestamp = last_timestamp
@@ -343,9 +369,9 @@ def calculate_movement(data, last_timestamp, center, old_next_hit=None):
         """
 
         close_points = _find_closest_old_cells(data[index], n_1_values)
-        _add_to_closest_match_to_history(data[index], n_1_values, close_points, new_data)
+        history = _add_to_closest_match_to_history(data[index], n_1_values, close_points, new_data)
 
         n_1_values = data[index].data
 
     # todo: fix parameters
-    return _caclulate_vector(new_data), close_points
+    return _caclulate_vector(new_data), history

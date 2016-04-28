@@ -85,7 +85,7 @@ class Measurement(object):
         self.forecast = forecast
         self.url = url
         self.radar_image = radar_image
-        if data and label_img:
+        if data and label_img is not None:
             self.data = data
             self.label_img = label_img
         else:

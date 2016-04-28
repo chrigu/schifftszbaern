@@ -65,7 +65,6 @@ class DataStorage(object):
 
         return old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_weather_data, old_next_hit
 
-
     def save_data(self, last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity,
                   snow, location_weather_data):
         #save data, convert datetime objects to strings

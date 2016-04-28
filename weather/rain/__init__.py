@@ -20,7 +20,7 @@ def get_rain_info(x, y, test_field_size, no_samples):
         data_queue = []
         now = datetime.now()
         next_hit = None
-        latest_radar = now - timedelta(0, 10*60)     # radar has a 8minute-ish delay, so go 10minutes back in time
+        latest_radar = now - timedelta(0, 10*60) # radar has a 8minute-ish delay, so go 10minutes back in time
 
         #todo move settings to main
         storage = DataStorage(settings.COLLECTOR_DATA_FILE)
@@ -50,6 +50,8 @@ def get_rain_info(x, y, test_field_size, no_samples):
             if not measurement:
                 radar_image = RadarImage((x-52, y-52, x+52, y+52), timestamp=timestamp)
                 measurement = Measurement(radar_image, timestamp)
+            else:
+                print "using stored data"
 
             #todo: rename .location
             # if not measurement.location:
@@ -75,7 +77,7 @@ def get_rain_info(x, y, test_field_size, no_samples):
 
         if not current_data_at_position:
 
-            vector, history = calculate_movement(data_queue, current_data.timestamp, 52, old_next_hit=old_next_hit)
+            vector, history = calculate_movement(data_queue, current_data.timestamp, 52)
 
             if vector != None:
                 next_hit = extrapolate_rain(vector, data_queue[0], test_field_size)

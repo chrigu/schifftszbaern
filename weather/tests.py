@@ -51,72 +51,110 @@ class PredictionTests(unittest.TestCase):
     #                     {'timestamp':self.start_time-timedelta(0,60*5), 'image':'test_5.png'}]
 
     #     self._test_images(test_images, 20)
+    def test_history(self):
+
+        images1 = [{'timestamp': self.start_time - timedelta(0, 60 * 15), 'image': 'test_history_4.png'},
+                   {'timestamp': self.start_time - timedelta(0, 60 * 20), 'image': 'test_history_3.png'}]
+
+        images2 = [{'timestamp': self.start_time - timedelta(0, 60 * 10), 'image': 'test_history_5.png'},
+                   {'timestamp': self.start_time - timedelta(0, 60 * 15), 'image': 'test_history_4.png'}]
+
+        images3 = [{'timestamp': self.start_time, 'image': 'test_history_6.png'},
+                   {'timestamp': self.start_time - timedelta(0, 60 * 5), 'image': 'test_history_5.png'}]
+
+        queue1, current1, vector1, history1, oldest_hit = self._get_history(images1)
+        queue2, current2, vector2, history2, old_hit = self._get_history(images2, old_hit=oldest_hit,
+                                                                         old_sample=current1)
+
+        queue3, current3 = self._get_measurement(images3, old_sample=current2)
+        vector3, history3 = calculate_movement(queue3, current3.timestamp, 52)
+
+        next_hit = extrapolate_rain(vector3, queue3[0], 105, history=history3, old_hit=old_hit)
+
+        self.assertEqual(next_hit['ancestors'], [oldest_hit['id'], old_hit['id'], next_hit['id']])
+
+    #todo rename
+    def _get_history(self, images, old_hit=None, old_sample=None):
+        queue, current = self._get_measurement(images, old_sample=old_sample)
+        vector, history = calculate_movement(queue, current.timestamp, 52)
+        next_hit = extrapolate_rain(vector, queue[0], 105, history=history, old_hit=old_hit)
+
+        return queue, current, vector, history, next_hit
 
 
-    def _test_images(self, images, minutes_to_hit):
-
-        #some initialization
+    def _get_measurement(self, images, old_sample=None):
+        # some initialization
         new_queue = []
         current_data = None
 
-        #get date
+        # get date
         now = images[0]['timestamp']
 
-        #get old data up to now - 5*5minutes
-        #note: We might not be using everything here
+        # get old data up to now - 5*5minutes
+        # note: We might not be using everything here
+        i = 0
         for test_image in images:
 
-            # todo: do in analyzer
-            url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
-            # r = png.Reader(file=open(url.replace('file:', ''), 'r'))
-            # data, image_name = get_radar_image((X_LOCATION, Y_LOCATION, X_LOCATION+105, Y_LOCATION+105), url=url)
-            radar_image = RadarImage((X_LOCATION-52, Y_LOCATION-52, X_LOCATION+52, Y_LOCATION+52), url=url)
-            # measurement = Measurement2((X_LOCATION, Y_LOCATION), test_image['timestamp'], 1, 105, data, url.split("/")[:-1])
-            #
-            # measurement.analyze_image()
-            # measurement = analyze_image_for_rain(radar_image, test_image['timestamp'])
-            measurement = Measurement(radar_image, test_image['timestamp'])
-            new_queue.append(measurement)
+            if not old_sample or old_sample and i == 0:
 
-            if now == test_image['timestamp']:
+                # todo: do in fn
+                url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
+                radar_image = RadarImage((X_LOCATION - 52, Y_LOCATION - 52, X_LOCATION + 52, Y_LOCATION + 52), url=url)
+                measurement = Measurement(radar_image, test_image['timestamp'])
+                new_queue.append(measurement)
 
-                current_data = measurement
-                old_latest_data = current_data
-                latest_update = test_image['timestamp']
+                if now == test_image['timestamp']:
+                    current_data = measurement
 
-        # next_hit = get_prediction_data(current_data, new_queue, {}, False)
-        # predictor = RainPredictor2(new_queue, current_data.timestamp, 52)
-        # vector = predictor.calculate_movement()
+            else:
+                new_queue.append(old_sample)
+
+            i += 1
+
+        current_data = new_queue[0]
+
+        return new_queue, current_data
+
+    def _get_vector(self, images):
+        # # some initialization
+        # new_queue = []
+        # current_data = None
+        #
+        # # get date
+        # now = images[0]['timestamp']
+        #
+        # # get old data up to now - 5*5minutes
+        # # note: We might not be using everything here
+        # for test_image in images:
+        #
+        #     # todo: do in fn
+        #     url = 'file:%s/testimages/%s' % (os.path.dirname(os.path.realpath(__file__)), test_image['image'])
+        #     radar_image = RadarImage((X_LOCATION - 52, Y_LOCATION - 52, X_LOCATION + 52, Y_LOCATION + 52), url=url)
+        #     measurement = Measurement(radar_image, test_image['timestamp'])
+        #     new_queue.append(measurement)
+        #
+        #     if now == test_image['timestamp']:
+        #         current_data = measurement
+        #         old_latest_data = current_data
+        #         latest_update = test_image['timestamp']
+
+        new_queue, current_data = self._get_measurement(images)
 
         vector, history = calculate_movement(new_queue, current_data.timestamp, 52)
         #todo: fix .data on data obj. shouldn't be an obj
-        # time_to_hit, data = new_queue[0].calc_matrix(vector)
         if not vector == None:
-            next_hit = extrapolate_rain(vector, new_queue[0], 105)
+            next_hit = extrapolate_rain(vector, new_queue[0], 105, history=history)
             print "hits %s, %s" % (next_hit['time_delta'], next_hit)
-            # self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5) * 60 and next_hit['time_delta'] <= (minutes_to_hit + 0.5) * 60)
-            self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5)  and next_hit['time_delta'] <= (minutes_to_hit + 0.5))
-
-            # try:
-            #     delta, size, time, hit_factor, intensity = predictor.make_forecast()
-            #
-            #     print "test: %s - time: %s (delta %s), hit_factor: %s"%(minutes_to_hit, time, delta/60, hit_factor)
-            # except Exception, e:
-            #     print e
-            #     pass
+            return new_queue, vector, history, next_hit
         else:
             self.fail("no hit")
 
-            # self.assertTrue(delta >= (minutes_to_hit-0.5)*60 and delta <= (minutes_to_hit+0.5)*60)
-            # #as the time to the impact (delta) is calculated when predictor.make_forecast() is run, the result from
-            # #get_prediction_data (which calls predictor.make_forecast()) and predictor.make_forecast() will differ
-            # #as such we're adding some margins to the test +/- 1s
-            # self.assertTrue(float(next_hit['time_delta']) >= (delta-1) and float(next_hit['time_delta']) <= (delta+1))
-            # self.assertEqual(hit_factor, next_hit['hit_factor'])
-            # self.assertEqual(int(size), next_hit['size'])
-            # self.assertEqual(intensity['intensity'], next_hit['intensity'])
-            # self.assertEqual(datetime.strftime(time, "%H%M"), next_hit['time'])
+    def _test_images(self, images, minutes_to_hit):
+        new_queue, vector, history, next_hit = self._get_vector(images)
 
+        self.assertEqual(next_hit['ancestors'][0], new_queue[0].data[0]['id'])
+        self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5)
+                            and next_hit['time_delta'] <= (minutes_to_hit + 0.5))
 
 class ImageAnalyzisTest(unittest.TestCase):
 
@@ -202,7 +240,7 @@ class ImageAnalyzisTest(unittest.TestCase):
         # measurement = analyze_image_for_rain(radar_image, self.start_time)
         measurement = Measurement(radar_image, self.start_time)
         # measurement.analyze_image()
-        self.assertEqual(measurement.location, {})
+        self.assertEqual(measurement.location, None)
 
 
 class WeatherTests(unittest.TestCase):
