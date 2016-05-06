@@ -17,6 +17,7 @@ class DataStorage(object):
     def load_data(self):
 
         old_rain = False
+        old_prediction_id = ''
         old_last_rain = None
         old_last_dry = None
         old_next_hit = None
@@ -52,6 +53,8 @@ class DataStorage(object):
                 old_weather_data = old_data['location_weather_data']
             if 'next_hit' in old_data:
                 old_next_hit = old_data['old_next_hit']
+            if 'prediction_id' in old_data['prediction_id']:
+                old_prediction_id = old_data['prediction_id']
 
         except Exception, e:
             if settings.DEBUG:
@@ -63,10 +66,11 @@ class DataStorage(object):
             except:
                 pass
 
-        return old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_weather_data, old_next_hit
+        #todo: return dict
+        return old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_weather_data, old_next_hit, old_prediction_id
 
     def save_data(self, last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity,
-                  snow, location_weather_data):
+                  snow, location_weather_data, prediction_id):
         #save data, convert datetime objects to strings
         try:
             if last_dry:
@@ -83,7 +87,8 @@ class DataStorage(object):
             save_data = {'last_update': datetime.strftime(last_update, settings.DATE_FORMAT), 'queue': queue_to_save,
                          'last_sample_rain': rain_now, 'last_dry': last_dry_string,
                         'last_rain': last_rain_string, 'next_hit': next_hit, 'intensity': intensity,
-                         'last_sample_snow': snow, 'location_weather_data': location_weather_data}
+                         'last_sample_snow': snow, 'location_weather_data': location_weather_data,
+                         'prediction_id': prediction_id}
 
             with open(self.filename, 'w') as outfile:
                 json.dump(save_data, outfile, default=self.encode)

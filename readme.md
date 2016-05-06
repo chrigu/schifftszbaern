@@ -1,6 +1,6 @@
 #Schiffts z'Bärn
 
-*Still under construction and still quite messy*
+*Still under construction and still messy*
 
 ##Introduction
 

@@ -25,7 +25,7 @@ def get_rain_info(x, y, test_field_size, no_samples):
         #todo move settings to main
         storage = DataStorage(settings.COLLECTOR_DATA_FILE)
         # load old data
-        old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather, old_next_hit = storage.load_data()
+        old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather, old_next_hit, old_prediction_id = storage.load_data()
         #todo move to storage
         old_data = {
             'old_rain': old_rain,
@@ -34,7 +34,8 @@ def get_rain_info(x, y, test_field_size, no_samples):
             'old_snow': old_snow,
             'old_data_queue': old_data_queue,
             'old_location_weather': old_location_weather,
-            'old_next_hit': old_next_hit
+            'old_next_hit': old_next_hit,
+            'old_prediction_id': old_prediction_id
         }
 
         # get data from srf.ch up to now

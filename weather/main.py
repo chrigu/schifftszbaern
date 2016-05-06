@@ -23,6 +23,7 @@ def schiffts():
     old_data = {}
     data_queue = []
     last_update = ''
+    prediction_id = ''
 
     intensity = 0
     temperature_data = {'status': 0}
@@ -37,7 +38,7 @@ def schiffts():
     if settings.DEBUG:
         print "current timestamp: %s"%timestamp
 
-    old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather, old_next_hit = storage.load_data()
+    old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather, old_next_hit, old_prediction_id = storage.load_data()
 
     measurements, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
     current_measurement = measurements[0]
@@ -65,10 +66,11 @@ def schiffts():
             from rain.utils import send_tweet
             try:
                 # don't send prediction if there's an old next hit value
-                if (((old_data.has_key('next_hit') and not old_data['next_hit']))):
+                if ('next_hit' in old_data and not old_data['next_hit']) and not old_prediction_id:
                     send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s" % (next_hit['time'], next_hit['time_delta'],
                                                                     next_hit['size'], next_hit['hit_factor'],
                                                                     next_hit['intensity']))
+                    prediction_id = next_hit['id']
 
             except Exception, e:
                 print e
@@ -101,7 +103,7 @@ def schiffts():
         tweet_status(rain_now, snow_update)
 
     storage.save_data(timestamp, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity, snow,
-                      location_weather)
+                      location_weather, prediction_id)
 
     # make data
     data_to_send = {'prediction': next_hit, 'current_data': current_data_at_position, 'temperature': temperature_data,
