@@ -66,8 +66,16 @@ class DataStorage(object):
             except:
                 pass
 
-        #todo: return dict
-        return old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_weather_data, old_next_hit, old_prediction_id
+        return {
+            'old_rain': old_rain,
+            'old_last_rain': old_last_rain,
+            'old_last_dry': old_last_dry,
+            'old_snow': old_snow,
+            'old_data_queue': old_data_queue,
+            'old_weather_data': old_weather_data,
+            'old_next_hit': old_next_hit,
+            'old_prediction_id': old_prediction_id
+        }
 
     def save_data(self, last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity,
                   snow, location_weather_data, prediction_id):

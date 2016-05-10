@@ -5,8 +5,8 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # FIXME
 
 import settings
-from rain import Measurement, build_timestamp, get_prediction_data, AmbientDataFetcher
-from utils import tweet_status
+from rain import build_timestamp, AmbientDataFetcher
+from rain.utils import tweet_status, tweet_prediction
 from weatherchecks import does_it_snow, does_it_rain
 from datastorage import DataStorage
 import json
@@ -17,12 +17,10 @@ import copy
 from rain import get_rain_info
 
 
-# FIXME: move parts to own module/class
+# FIXME: move all to weather
 def schiffts():
     # some initialization
     old_data = {}
-    data_queue = []
-    last_update = ''
     prediction_id = ''
 
     intensity = 0
@@ -32,13 +30,13 @@ def schiffts():
 
     # get date
     now = datetime.now()
-    latest_radar = now - timedelta(0, 10*60)     # radar has a 8minute-ish delay, so go 10minutes back in time
+    latest_radar = now - timedelta(0, 10*60) # radar has a 8minute-ish delay, so go 10minutes back in time
     timestamp = build_timestamp(latest_radar)
 
     if settings.DEBUG:
         print "current timestamp: %s"%timestamp
 
-    old_rain, old_last_rain, old_last_dry, old_snow, old_data_queue, old_location_weather, old_next_hit, old_prediction_id = storage.load_data()
+    stored_data = storage.load_data()
 
     measurements, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
     current_measurement = measurements[0]
@@ -52,24 +50,19 @@ def schiffts():
     if does_it_rain(current_data_at_position):
         rain_now = True
         last_rain = current_measurement.timestamp
-        last_dry = old_last_dry
+        last_dry = stored_data['old_last_dry']
         intensity = current_data_at_position['intensity']
 
     else:
         rain_now = False
         last_dry = current_measurement.timestamp
-        last_rain = old_last_rain
-
-        # next_hit = get_prediction_data(current_data, data_queue, old_data, settings.TWEET_PREDICTION)
+        last_rain = stored_data['old_last_rain']
 
         if next_hit and settings.TWEET_PREDICTION:
-            from rain.utils import send_tweet
             try:
                 # don't send prediction if there's an old next hit value
-                if ('next_hit' in old_data and not old_data['next_hit']) and not old_prediction_id:
-                    send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s" % (next_hit['time'], next_hit['time_delta'],
-                                                                    next_hit['size'], next_hit['hit_factor'],
-                                                                    next_hit['intensity']))
+                if ('next_hit' in old_data and not old_data['next_hit']) and not stored_data['old_prediction_id']:
+                    tweet_prediction(next_hit)
                     prediction_id = next_hit['id']
 
             except Exception, e:
@@ -77,7 +70,7 @@ def schiffts():
                 pass
 
     if settings.DEBUG:
-        print "raining now: %s, raining before: %s" % (rain_now, old_rain)
+        print "raining now: %s, raining before: %s" % (rain_now, stored_data['old_rain'])
 
     # get temperature info from SMN
     if settings.GET_TEMPERATURE:
@@ -86,11 +79,11 @@ def schiffts():
             print "temperature data: %s" % temperature_data
 
     # get current weather from smn (only if the latest value is older than 30min)
-    if old_location_weather != {} and 'timestamp' in old_location_weather:
-        if now - datetime.strptime(str(old_location_weather['timestamp']), settings.DATE_FORMAT) > timedelta(0, 60*30):
+    if stored_data['old_weather_data'] != {} and 'timestamp' in stored_data['old_weather_data']:
+        if now - datetime.strptime(str(stored_data['old_location_weather']['timestamp']), settings.DATE_FORMAT) > timedelta(0, 60*30):
             location_weather = AmbientDataFetcher.get_weather(settings.SMN_CODE)
         else:
-            location_weather = old_location_weather
+            location_weather = stored_data['old_location_weather']
     else:
         location_weather = AmbientDataFetcher.get_weather(settings.SMN_CODE)
 
@@ -98,8 +91,8 @@ def schiffts():
     snow = does_it_snow(intensity, temperature_data)
 
     # update twitter if state changed
-    if rain_now != old_rain and settings.TWEET_STATUS:
-        snow_update = snow or old_snow
+    if rain_now != stored_data['old_rain'] and settings.TWEET_STATUS:
+        snow_update = snow or stored_data['old_snow']
         tweet_status(rain_now, snow_update)
 
     storage.save_data(timestamp, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity, snow,
@@ -123,6 +116,3 @@ def schiffts():
 if __name__ == '__main__':
     schiffts()
 
-    # measurement, hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
-    # print hit
-    # print measurement.rain_at_position(52, 52)

@@ -12,24 +12,52 @@ import math
 #todo: remove
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
 import settings
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import Counter
 import settings as settings
+from RainPredictor import RainPredictor
 import twitter
 import random
 import settings
 import requests
 import json
 
-#todo remove
-def twitter_api():
-    """
-    Returns an API handle for twitter
-    """
-    return twitter.Api(consumer_key=settings.CONSUMER_KEY,
-                      consumer_secret=settings.CONSUMER_SECRET,
-                      access_token_key=settings.ACCESS_TOKEN,
-                      access_token_secret=settings.ACCESS_TOKEN_SECRET)
+"""
+
+radar values from http://www.srf.ch/meteo/radar
+
+rain
+< 1mm/h   0/150/255
+< 3mm/h   0/50/255
+< 10mm/h  0/0/200
+< 30mm/h  0/0/125
+< 100mm/h 255/255/0
+> 100mm/h 255/0/0
+
+snow
+Flocken 199/254/254
+schwach 150/255/255
+mässig 100/255/255
+stark 25/255/255
+sehr stark 0/255/255
+extrem 0/200/255
+
+
+"""
+
+RAIN_INTENSITIES = [{'name': '1mm/h', 'rgb': [0, 150, 255], 'intensity': 0},
+                    {'name': '3mm/h', 'rgb': [0, 50, 255], 'intensity': 1},
+                    {'name': '10mm/h', 'rgb': [0, 0, 200], 'intensity': 2},
+                    {'name': '30mm/h', 'rgb': [0, 0, 125], 'intensity': 3},
+                    {'name': '100mm/h', 'rgb': [255, 255, 0], 'intensity': 4},
+                    {'name': '>100mm/h', 'rgb': [255, 0, 0], 'intensity': 5},
+                    {'name': 'flakes', 'rgb': [200, 255, 255], 'intensity': 10},
+                    {'name': 'snow weak', 'rgb': [150, 255, 255], 'intensity': 11},
+                    {'name': 'snow moderate', 'rgb': [100, 255, 255], 'intensity': 12},
+                    {'name': 'snow strong', 'rgb': [25, 255, 255], 'intensity': 13},
+                    {'name': 'snow heavy', 'rgb': [0, 255, 255], 'intensity': 14},
+                    {'name': 'snow very heavy', 'rgb': [0, 200, 255], 'intensity': 15},
+                    {'name': 'blank', 'rgb': [9, 46, 69], 'intensity': -1}]
 
 
 def tweet_status(rain, snow):
@@ -40,10 +68,15 @@ def tweet_status(rain, snow):
 
     # print api.VerifyCredentials()
 
+    api = twitter.Api(consumer_key=settings.CONSUMER_KEY,
+                consumer_secret=settings.CONSUMER_SECRET,
+                access_token_key=settings.ACCESS_TOKEN,
+                access_token_secret=settings.ACCESS_TOKEN_SECRET)
+
     tried = []
     #twitter doesn't allow posting the same message twice so we'll just 5x with different messages
     #FIXME: save message to JSON
-    for i in range(0,5):
+    for i in range(0, 5):
         try:
             if rain:
                 if snow:
@@ -59,7 +92,7 @@ def tweet_status(rain, snow):
             if message in tried:
               continue
 
-            send_tweet(message)
+            send_tweet(message, api=api)
             break
 
         except Exception, e:
@@ -68,11 +101,19 @@ def tweet_status(rain, snow):
             pass
 
 
+def tweet_prediction(next_hit):
+    api = twitter.Api(consumer_key=settings.PREDICTION_CONSUMER_KEY,
+                      consumer_secret=settings.PREDICTION_CONSUMER_SECRET,
+                      access_token_key=settings.PREDICTION_ACCESS_TOKEN,
+                      access_token_secret=settings.PREDICTION_ACCESS_TOKEN_SECRET)
+
+    send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s" % (next_hit['time'], next_hit['time_delta'],
+                                                    next_hit['size'], next_hit['hit_factor'],
+                                                    next_hit['intensity']),
+               api=api)
+
+
 def send_tweet(message, api=None):
-
-    if not api:
-        api = twitter_api()
-
     return api.PostUpdate(message)
 
 
@@ -117,46 +158,8 @@ def send_lametric(message, icon):
     return requests.post(settings.LAMETRIC_URL, headers=headers, data=json.dumps(data))
 
 
-"""
-
-radar values from http://www.srf.ch/meteo/radar
-
-rain
-< 1mm/h   0/150/255
-< 3mm/h   0/50/255
-< 10mm/h  0/0/200
-< 30mm/h  0/0/125
-< 100mm/h 255/255/0
-> 100mm/h 255/0/0
-
-snow
-Flocken 199/254/254
-schwach 150/255/255
-mässig 100/255/255
-stark 25/255/255
-sehr stark 0/255/255
-extrem 0/200/255
-
-
-"""
-
-
 def get_timestring(timestamp):
     return datetime.strftime(timestamp, settings.DATE_FORMAT)
-
-RAIN_INTENSITIES = [{'name': '1mm/h', 'rgb': [0, 150, 255], 'intensity': 0},
-                    {'name': '3mm/h', 'rgb': [0, 50, 255], 'intensity': 1},
-                    {'name': '10mm/h', 'rgb': [0, 0, 200], 'intensity': 2},
-                    {'name': '30mm/h', 'rgb': [0, 0, 125], 'intensity': 3},
-                    {'name': '100mm/h', 'rgb': [255, 255, 0], 'intensity': 4},
-                    {'name': '>100mm/h', 'rgb': [255, 0, 0], 'intensity': 5},
-                    {'name': 'flakes', 'rgb': [200, 255, 255], 'intensity': 10},
-                    {'name': 'snow weak', 'rgb': [150, 255, 255], 'intensity': 11},
-                    {'name': 'snow moderate', 'rgb': [100, 255, 255], 'intensity': 12},
-                    {'name': 'snow strong', 'rgb': [25, 255, 255], 'intensity': 13},
-                    {'name': 'snow heavy', 'rgb': [0, 255, 255], 'intensity': 14},
-                    {'name': 'snow very heavy', 'rgb': [0, 200, 255], 'intensity': 15},
-                    {'name': 'blank', 'rgb': [9, 46, 69], 'intensity': -1}]
 
 
 def extrapolate_rain(vector, sample, test_field_size, old_hit=None, history=None):
@@ -211,7 +214,6 @@ def extrapolate_rain(vector, sample, test_field_size, old_hit=None, history=None
                                 break
                             except ValueError:
                                 pass
-
 
                 print new_ancestor
 
@@ -294,11 +296,8 @@ def _add_to_closest_match_to_history(data, newer_values, close_points, new_data)
 
 
 def _caclulate_vector(data):
-    # Loop through a raincells history (past positions) and calculate the movement for the next 50min
 
-    hits = []
     vectors = []
-    avg_vector = None
 
     for history in data:
 
@@ -318,15 +317,9 @@ def _caclulate_vector(data):
 
         except Exception, e:
             print e
-            radius_abs = 0
 
         if settings.DEBUG:
             print "last_pos: %s, mean %s" % (initial_position, mean)
-
-            # hit = self._find_future_hit(history[0], initial_position, radius_abs, mean, 0.5)
-
-            # if hit:
-            #     hits.append(hit)
 
     abs_values = map(lambda vector: linalg.norm(vector, ord=1), vectors)
     if len(abs_values) > 0:
@@ -334,18 +327,11 @@ def _caclulate_vector(data):
         return vectors[index]
     else:
         return None
-    # if len(data) != 0:
-    #     # todo: calc vectors
-    #     avg_vector = reduce(lambda x, y: x + y, vectors) / len(vectors)
-    #
-    # return avg_vector
-
 
 def calculate_movement(data, last_timestamp, center):
 
     data = sorted(data, key=lambda x: x.timestamp, reverse=True)
-    last_timestamp = last_timestamp
-    center = center
+    history = None
 
     new_data, n_1_values = _init_samples(data)
 
@@ -362,12 +348,6 @@ def calculate_movement(data, last_timestamp, center):
             print "error: %s" % e
             continue
 
-
-        """
-        return close points and pass them to the extrapolate_rain method. There use the close_points to find the
-        id's cloud and add the id's to the next_hits ancestors
-        """
-
         close_points = _find_closest_old_cells(data[index], n_1_values)
         history = _add_to_closest_match_to_history(data[index], n_1_values, close_points, new_data)
 
@@ -375,3 +355,71 @@ def calculate_movement(data, last_timestamp, center):
 
     # todo: fix parameters
     return _caclulate_vector(new_data), history
+
+
+def build_timestamp(time, forecast=False):
+    """
+    Takes the given time and subtracts 8 minutes and rounds to the next lower 5minute step.
+    """
+
+    # update rate is 5min, so round to the last 5minute step
+    off_minutes = time.minute % 5
+    rounded_delta = timedelta(0, off_minutes*60)
+
+    rounded_time = (time - rounded_delta).replace(second=0, microsecond=0)
+
+    return rounded_time
+
+
+def get_prediction_data(current_data, data_queue, old_data, tweet_prediction):
+    # make prediction. Very much beta
+    if current_data:
+
+        next_hit = {}
+
+        predictor = RainPredictor(data_queue, current_data.timestamp, 18)
+        try:
+            time_delta, size, impact_time, hit_factor, hit_intensity = predictor.make_forecast()
+            if settings.DEBUG:
+                print "next rain at %s (delta %s) with size %s, hf: %s"%(impact_time, time_delta, size, hit_factor)
+
+            if size > 0:
+                next_hit['hit_factor'] = hit_factor
+                # no need to be too precise
+                next_hit['time_delta'] = int(time_delta)
+                next_hit['size'] = int(size)
+                next_hit['time'] = datetime.strftime(impact_time, "%H%M")
+                next_hit['intensity'] = hit_intensity['intensity']
+
+                if tweet_prediction:
+                    from schifftszbaern.utils import send_tweet
+                    try:
+                        # don't send prediction if there's an old next hit value
+                        if (((old_data.has_key('next_hit') and not old_data['next_hit']) or
+                                 (not old_data.has_key('next_hit'))) and next_hit['time'] and hit_factor > 1.2):
+                            send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s"%(next_hit['time'], next_hit['time_delta'],
+                                        next_hit['size'], next_hit['hit_factor'], next_hit['intensity']))
+
+                    except Exception, e:
+                        print e
+                        pass
+
+            return next_hit
+
+        except Exception, e:
+            print e
+            return {}
+
+
+def build_timestamp(time, forecast=False):
+    """
+    Takes the given time and subtracts 8 minutes and rounds to the next lower 5minute step.
+    """
+
+    # update rate is 5min, so round to the last 5minute step
+    off_minutes = time.minute % 5
+    rounded_delta = timedelta(0, off_minutes * 60)
+
+    rounded_time = (time - rounded_delta).replace(second=0, microsecond=0)
+
+    return rounded_time

@@ -41,6 +41,11 @@ CONSUMER_SECRET = 'consumer-secret'
 ACCESS_TOKEN = 'access-token'
 ACCESS_TOKEN_SECRET ='token-secret'
 
+PREDICTION_CONSUMER_KEY = 'consumer-key'
+PREDICTION_CONSUMER_SECRET = 'consumer-secret'
+PREDICTION_ACCESS_TOKEN = 'access-token'
+PREDICTION_ACCESS_TOKEN_SECRET ='token-secret'
+
 TWEET_STATUS = False
 TWEET_PREDICTION = False
 

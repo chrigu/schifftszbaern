@@ -18,7 +18,8 @@ def does_it_snow(intensity, temperature_data):
     '''
     if intensity > 9:
         #if we have the current temperature doublecheck if it is cold enough
-        if settings.GET_TEMPERATURE and temperature_data['status'] == 200 and float(temperature_data['temperature']) < 1.0:
+        if settings.GET_TEMPERATURE and temperature_data['status'] == 200 and temperature_data['temperature'] and \
+                        float(temperature_data['temperature']) < 1.0:
             return True
         else:
             return False
