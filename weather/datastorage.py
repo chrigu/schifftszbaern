@@ -38,21 +38,22 @@ class DataStorage(object):
                     if measurement:
                         old_data_queue.append(measurement)
 
-            #get the rest of the old data (last time of no-/rain, etc.)
+            # get the rest of the old data (last time of no-/rain, etc.)
+            # todo mayhaps just use the stored data.....
             if 'last_sample_rain' in old_data:
                 old_rain = old_data['last_sample_rain']
             if 'last_rain' in old_data and old_data['last_rain']:
                 old_last_rain = datetime.strptime(old_data['last_rain'], settings.DATE_FORMAT)
             if 'last_dry' in old_data and old_data['last_dry']:
                 old_last_dry = datetime.strptime(old_data['last_dry'], settings.DATE_FORMAT)
-            if old_data.has_key('next_hit'):
-                old_next_hit = datetime.strptime(old_data['old_next_hit'],settings.DATE_FORMAT)
+            if 'next_hit' in old_data:
+                old_next_hit = datetime.strptime(old_data['old_next_hit'], settings.DATE_FORMAT)
             if 'last_sample_snow' in old_data:
                 old_snow = old_data['last_sample_snow']
             if 'location_weather_data' in old_data:
                 old_weather_data = old_data['location_weather_data']
             if 'next_hit' in old_data:
-                old_next_hit = old_data['old_next_hit']
+                old_next_hit = old_data['next_hit']
             if 'prediction_id' in old_data['prediction_id']:
                 old_prediction_id = old_data['prediction_id']
 
@@ -67,14 +68,14 @@ class DataStorage(object):
                 pass
 
         return {
-            'old_rain': old_rain,
-            'old_last_rain': old_last_rain,
-            'old_last_dry': old_last_dry,
-            'old_snow': old_snow,
-            'old_data_queue': old_data_queue,
-            'old_weather_data': old_weather_data,
-            'old_next_hit': old_next_hit,
-            'old_prediction_id': old_prediction_id
+            'rain': old_rain,
+            'last_rain': old_last_rain,
+            'last_dry': old_last_dry,
+            'snow': old_snow,
+            'data_queue': old_data_queue,
+            'weather_data': old_weather_data,
+            'next_hit': old_next_hit,
+            'prediction_id': old_prediction_id
         }
 
     def save_data(self, last_update, queue_to_save, rain_now, last_dry, last_rain, next_hit, intensity,

@@ -30,7 +30,7 @@ def get_rain_info(x, y, test_field_size, no_samples):
             timestamp = build_timestamp(latest_radar - timedelta(0, 60*5*minutes))
 
             # try to retrieve a measurement for the timestamp from the old data queue
-            measurement = next((item for item in old_data['old_data_queue'] if item.timestamp == timestamp), None)
+            measurement = next((item for item in old_data['data_queue'] if item.timestamp == timestamp), None)
 
             # try:
             # todo catch error
