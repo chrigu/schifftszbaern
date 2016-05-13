@@ -107,10 +107,10 @@ def tweet_prediction(next_hit):
                       access_token_key=settings.PREDICTION_ACCESS_TOKEN,
                       access_token_secret=settings.PREDICTION_ACCESS_TOKEN_SECRET)
 
-    send_tweet("t:%s, d:%s, s:%s, hf: %s, i: %s" % (next_hit['time'], next_hit['time_delta'],
-                                                    next_hit['size'], next_hit['hit_factor'],
-                                                    next_hit['intensity']),
+    send_tweet("delta:%s, s:%s, i: %s" % (next_hit['time_delta'], next_hit['size'], next_hit['intensity']['intensity']),
                api=api)
+
+    return True
 
 
 def send_tweet(message, api=None):

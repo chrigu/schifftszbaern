@@ -20,7 +20,6 @@ from rain import get_rain_info
 # FIXME: move all to weather
 def schiffts():
     # some initialization
-    old_data = {}
     prediction_id = ''
 
     intensity = 0
@@ -62,7 +61,7 @@ def schiffts():
             try:
                 # don't send prediction if there's an old next hit value
                 if ('next_hit' in stored_data and not stored_data['next_hit']) and not stored_data['prediction_id']:
-                    tweet_prediction(next_hit)
+                    # tweet_prediction(next_hit)
                     prediction_id = next_hit['id']
 
             except Exception, e:

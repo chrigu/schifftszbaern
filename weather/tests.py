@@ -1,4 +1,5 @@
 import os, sys
+from mock import patch
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #FIXME
 from rain.Measurement import Measurement
 
@@ -8,7 +9,8 @@ import os
 import settings
 from rain.RadarImage import RadarImage
 from rain import extrapolate_rain
-from rain.utils import calculate_movement
+import rain.utils
+from rain.utils import calculate_movement, tweet_prediction
 import unittest
 
 #Berne, Baby, Berne!
@@ -272,6 +274,28 @@ class WeatherTests(unittest.TestCase):
 
         snow = does_it_snow(intensity, temperature_data)
         self.assertTrue(snow)
+
+
+class TwitterTest(unittest.TestCase):
+
+    def test_prediction_tweet(self):
+        with patch('rain.utils.send_tweet') as MockClass:
+            MockClass.return_value = True
+
+        next_hit = {
+            "ancestors": ["6c06e737a5294a33b1d5d2915cba88ec"],
+            "hit_factor": 2,
+            "intensity":
+                {"rgb": [0, 50, 255],
+                 "name": "3mm/h",
+                 "intensity": 1},
+            "time_delta": 10,
+            "id": "6c06e737a5294a33b1d5d2915cba88ec",
+            "size": 2661
+        }
+
+        self.assertEqual(True, tweet_prediction(next_hit))
+
 
 if __name__ == '__main__':
     unittest.main()
