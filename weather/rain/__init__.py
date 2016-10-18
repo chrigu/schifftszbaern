@@ -16,6 +16,7 @@ def get_rain_info(x, y, test_field_size, no_samples):
 
         # get date
         data_queue = []
+        history = []
         now = datetime.now()
         next_hit = None
         latest_radar = now - timedelta(0, 10*60) # radar has a 8minute-ish delay, so go 10minutes back in time
@@ -53,7 +54,7 @@ def get_rain_info(x, y, test_field_size, no_samples):
 
         if not current_data_at_position:
 
-            vector, history = calculate_movement(data_queue, current_data.timestamp, 52)
+            vector, history = calculate_movement(data_queue, current_data.timestamp, 52) # todo: rename history to histories
 
             if vector != None:
                 next_hit = extrapolate_rain(vector, data_queue[0], test_field_size)
@@ -62,4 +63,4 @@ def get_rain_info(x, y, test_field_size, no_samples):
                 else:
                     print "no hit"
 
-        return data_queue, next_hit
+        return data_queue, next_hit, history

@@ -17,6 +17,9 @@ import copy
 from rain import get_rain_info
 
 
+# get pred id from storage
+# tweet if pred id not in id history
+
 # FIXME: move all to weather
 def schiffts():
     # some initialization
@@ -37,7 +40,11 @@ def schiffts():
 
     stored_data = storage.load_data()
 
-    measurements, next_hit = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
+    # todo: move elsewhere
+    if 'prediction_id' in stored_data:
+        prediction_id = stored_data['prediction_id']
+
+    measurements, next_hit, histories = get_rain_info(settings.X_LOCATION, settings.Y_LOCATION, 105, settings.NO_SAMPLES)
     current_measurement = measurements[0]
 
     current_data_at_position = current_measurement.rain_at_position(52, 52)
@@ -59,14 +66,47 @@ def schiffts():
 
         if next_hit and settings.TWEET_PREDICTION:
             try:
+                # todo: make this nice :D
+                for history in histories:
+
+                    found_next_hit = False
+                    found_old_hit = False
+
+                    for datapoint in history:
+                        # find next hit's history
+                        if datapoint['id'] == next_hit['id']:
+                            found_next_hit = True
+
+                        if datapoint['id'] == prediction_id:
+                            found_old_hit = True
+
+                        # todo: break
+
+                    # if not both values are true it's a new cell -> tweet about it
+                    if not (found_old_hit and found_next_hit):
+                        tweet_prediction(next_hit)
+
+
                 # don't send prediction if there's an old next hit value
-                if ('next_hit' in stored_data and not stored_data['next_hit']) and not stored_data['prediction_id']:
+                # if ('next_hit' in stored_data and not stored_data['next_hit']) and not stored_data['prediction_id']:
+
+                    # always keep last pred id
+                    # check if pred id in history of next hit
+                    #
+                    # try:
+                    #     # todo make it nice
+                    #     for history_queue in history:
+                    #         for i in range(0, len(history_queue) - 1):
+                    #             if data_point['id'] == next_hit['id']
                     # tweet_prediction(next_hit)
-                    prediction_id = next_hit['id']
+                    # prediction_id = next_hit['id']
 
             except Exception, e:
-                print e
+                print "prediction: %s" % e
                 pass
+
+        if next_hit:
+            prediction_id = next_hit['id']
 
     if settings.DEBUG:
         print "raining now: %s, raining before: %s" % (rain_now, stored_data['rain'])

@@ -268,8 +268,11 @@ def _find_closest_old_cells(data, newer_data):
 def _add_to_closest_match_to_history(data, newer_values, close_points, new_data):
     # find the closest match among the cells for a given time
     for last_sample in newer_values:  # FIXME: rename to new_smample
+
         position = np_array(last_sample['center_of_mass'])
+
         if last_sample['id'] in close_points:
+
             distances = map(lambda close_sample: linalg.norm(position - np_array(close_sample['center_of_mass'])),
                             close_points[last_sample['id']])
             closest_match = close_points[last_sample['id']][distances.index(min(distances))]
@@ -329,6 +332,7 @@ def _caclulate_vector(data):
     else:
         return None
 
+
 def calculate_movement(data, last_timestamp, center):
 
     data = sorted(data, key=lambda x: x.timestamp, reverse=True)
@@ -355,7 +359,7 @@ def calculate_movement(data, last_timestamp, center):
         n_1_values = data[index].data
 
     # todo: fix parameters
-    return _caclulate_vector(new_data), history
+    return _caclulate_vector(new_data), history # history and new_data is kind of the same o_O
 
 
 def build_timestamp(time, forecast=False):
