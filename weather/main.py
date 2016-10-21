@@ -74,10 +74,10 @@ def schiffts():
 
                     for datapoint in history:
                         # find next hit's history
-                        if datapoint['id'] == next_hit['id']:
+                        if 'id' in datapoint and datapoint['id'] == next_hit['id']:
                             found_next_hit = True
 
-                        if datapoint['id'] == prediction_id:
+                        if 'id' in datapoint['id'] == prediction_id:
                             found_old_hit = True
 
                         # todo: break

@@ -152,7 +152,22 @@ class PredictionTests(unittest.TestCase):
             self.fail("no hit")
 
     def _test_images(self, images, minutes_to_hit):
-        new_queue, vector, history, next_hit = self._get_vector(images)
+        new_queue, vector, histories, next_hit = self._get_vector(images)
+
+        for history in histories:
+
+            found_next_hit = False
+            found_old_hit = False
+
+            for datapoint in history:
+                # find next hit's history
+                if datapoint['id'] == next_hit['id']:
+                    found_next_hit = True
+
+
+            # # if not both values are true it's a new cell -> tweet about it
+            # if not (found_old_hit and found_next_hit):
+            #     tweet_prediction(next_hit)
 
         self.assertEqual(next_hit['ancestors'][0], new_queue[0].data[0]['id'])
         self.assertTrue(next_hit['time_delta'] >= (minutes_to_hit - 0.5)
@@ -294,7 +309,7 @@ class TwitterTest(unittest.TestCase):
             "size": 2661
         }
 
-        self.assertEqual(True, tweet_prediction(next_hit))
+        # self.assertEqual(True, tweet_prediction(next_hit))
 
 
 if __name__ == '__main__':
