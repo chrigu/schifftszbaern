@@ -4,7 +4,7 @@
 
 ##Introduction
 
-"Schiffts z'Bärn" (is it raining in Berne) is a serivce that broadcasts (over Twitter and/or a webpage) if it is currently raining in Berne, Switzerland (the service can be configured for other locations in Switzerland too). With some additional hardware it is also possible to display rain warnings on a ambient device (light cloud).
+"Schiffts z'Bärn" (is it raining in Berne) is a service that broadcasts (over Twitter and/or a webpage) if it is currently raining in Berne, Switzerland (the service can be configured for other locations in Switzerland too). With some additional hardware it is also possible to display rain warnings on an ambient device (light cloud).
 
 The rain information is pulled from the [Swiss National TV's rain radar webpage (SRF)](http://www.srf.ch/meteo/radar). On this website the rain is displayed as an overlay on a map. The overlay is just a PNG where colored pixels represent rain cells and this information is used as the data source.
 
